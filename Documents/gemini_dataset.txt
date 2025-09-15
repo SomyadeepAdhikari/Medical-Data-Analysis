@@ -1,0 +1,1597 @@
+Patient ID: 1
+Age: 78
+Gender: Male
+Date: 2022-04-18
+Condition: Pneumonia
+Medications: Metformin, Omeprazole, CPAP
+Tests: Blood Glucose, Urine Test, Blood Test, MRI
+Symptoms: Chest Pain, Cough, Nausea, Fever, Shortness of Breath
+----------------------------------------
+
+Patient ID: 2
+Age: 55
+Gender: Female
+Date: 2021-08-05
+Condition: Hypothyroidism
+Medications: Levothyroxine, Sertraline
+Tests: Blood Test, Blood Pressure
+Symptoms: Fatigue, Swelling, Headache
+----------------------------------------
+
+Patient ID: 3
+Age: 32
+Gender: Female
+Date: 2023-01-12
+Condition: Asthma
+Medications: Albuterol, Omeprazole
+Tests: Pulmonary Function Test, Blood Glucose, Physical Exam
+Symptoms: Shortness of Breath, Cough, Chest Pain, Fatigue
+----------------------------------------
+
+Patient ID: 4
+Age: 67
+Gender: Other
+Date: 2020-03-22
+Condition: Chronic Kidney Disease
+Medications: Epoetin Alfa, Lorazepam, Aspirin
+Tests: Blood Test, Kidney Function Test, Blood Pressure, ECG
+Symptoms: Nausea, Vomiting, Fatigue, Weakness
+----------------------------------------
+
+Patient ID: 5
+Age: 29
+Gender: Male
+Date: 2023-11-09
+Condition: Migraine
+Medications: Sumatriptan
+Tests: MRI, Neurological Exam
+Symptoms: Headache, Nausea, Dizziness, Blurred Vision
+----------------------------------------
+
+Patient ID: 6
+Age: 85
+Gender: Female
+Date: 2021-06-25
+Condition: Hypertension
+Medications: Lisinopril, Aspirin, Metformin
+Tests: Blood Pressure, ECG, Blood Test
+Symptoms: Headache, Chest Pain, Fatigue
+----------------------------------------
+
+Patient ID: 7
+Age: 41
+Gender: Male
+Date: 2024-02-08
+Condition: Anxiety Disorder
+Medications: Lorazepam
+Tests: Physical Exam, Blood Pressure
+Symptoms: Anxiety, Insomnia, Palpitations
+----------------------------------------
+
+Patient ID: 8
+Age: 62
+Gender: Female
+Date: 2022-12-19
+Condition: Diabetes Mellitus
+Medications: Metformin, Aspirin, Levothyroxine
+Tests: Blood Glucose, Blood Test, Lipid Panel, Physical Exam
+Symptoms: Fatigue, Blurred Vision, Numbness
+----------------------------------------
+
+Patient ID: 9
+Age: 22
+Gender: Male
+Date: 2020-07-03
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Itching, Headache
+----------------------------------------
+
+Patient ID: 10
+Age: 50
+Gender: Other
+Date: 2023-09-27
+Condition: Coronary Artery Disease
+Medications: Aspirin, Warfarin
+Tests: ECG, Blood Pressure, Lipid Panel, Blood Test
+Symptoms: Chest Pain, Shortness of Breath, Fatigue
+----------------------------------------------------
+
+Patient ID: 1001
+Age: 27
+Gender: Female
+Date: 2021-02-15
+Condition: Viral Infection
+Medications: Paracetamol
+Tests: Blood Test, Physical Exam
+Symptoms: Fever, Sore Throat, Fatigue
+----------------------------------------
+
+Patient ID: 1002
+Age: 69
+Gender: Male
+Date: 2023-07-22
+Condition: Osteoarthritis
+Medications: Ibuprofen, Painkillers
+Tests: X-Ray, Physical Exam
+Symptoms: Pain, Limited Movement
+----------------------------------------
+
+Patient ID: 1003
+Age: 44
+Gender: Other
+Date: 2020-11-03
+Condition: Sleep Apnea
+Medications: CPAP
+Tests: Sleep Study
+Symptoms: Fatigue, Insomnia
+----------------------------------------
+
+Patient ID: 1004
+Age: 38
+Gender: Male
+Date: 2024-03-10
+Condition: Bronchitis
+Medications: Prednisone, Azithromycin
+Tests: Pulmonary Function Test, Blood Test
+Symptoms: Cough, Shortness of Breath, Chest Pain
+----------------------------------------
+
+Patient ID: 1005
+Age: 81
+Gender: Female
+Date: 2022-09-08
+Condition: Atrial Fibrillation
+Medications: Warfarin, Timolol
+Tests: ECG, Blood Test
+Symptoms: Palpitations, Dizziness
+----------------------------------------
+
+Patient ID: 1006
+Age: 52
+Gender: Male
+Date: 2021-05-28
+Condition: GERD
+Medications: Omeprazole
+Tests: Physical Exam
+Symptoms: Abdominal Pain, Nausea
+----------------------------------------
+
+Patient ID: 1007
+Age: 20
+Gender: Female
+Date: 2023-12-01
+Condition: Sprain
+Medications: RICE, Painkillers
+Tests: X-Ray, Physical Exam
+Symptoms: Swelling, Pain, Limited Movement
+----------------------------------------
+
+Patient ID: 1008
+Age: 73
+Gender: Other
+Date: 2020-08-17
+Condition: Glaucoma
+Medications: Timolol
+Tests: Eye Exam
+Symptoms: Blurred Vision
+----------------------------------------
+
+Patient ID: 1009
+Age: 35
+Gender: Male
+Date: 2024-01-25
+Condition: Appendicitis
+Medications: Antibiotics, Cholecystectomy
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Loss of Appetite
+----------------------------------------
+
+Patient ID: 1010
+Age: 60
+Gender: Female
+Date: 2022-06-12
+Condition: Dermatitis
+Medications: Hydrocortisone
+Tests: Allergy Test, Physical Exam
+Symptoms: Rash, Itching
+----------------------------------------
+
+Patient ID: 1011
+Age: 48
+Gender: Male
+Date: 2021-09-30
+Condition: Concussion
+Medications: Rest, Painkillers
+Tests: CT Scan, Neurological Exam
+Symptoms: Headache, Confusion, Dizziness
+----------------------------------------
+
+Patient ID: 1012
+Age: 23
+Gender: Other
+Date: 2023-04-05
+Condition: UTI
+Medications: Ciprofloxacin
+Tests: Urine Test, Blood Test
+Symptoms: Abdominal Pain, Fever
+----------------------------------------
+
+Patient ID: 1013
+Age: 76
+Gender: Female
+Date: 2020-02-28
+Condition: Stroke
+Medications: tPA, Aspirin
+Tests: MRI, CT Scan
+Symptoms: Weakness, Numbness, Confusion
+----------------------------------------
+
+Patient ID: 1014
+Age: 57
+Gender: Male
+Date: 2024-05-18
+Condition: Pancreatitis
+Medications: Pancreatic Enzymes, Painkillers
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Vomiting, Back Pain
+----------------------------------------
+
+Patient ID: 1015
+Age: 31
+Gender: Female
+Date: 2022-11-14
+Condition: Healthy
+Medications: None
+Tests: Physical Exam, Blood Pressure
+Symptoms: No Symptoms
+----------------------------------------
+
+Patient ID: 1016
+Age: 63
+Gender: Other
+Date: 2021-07-09
+Condition: Bacterial Infection
+Medications: Azithromycin
+Tests: Blood Test, Stool Test
+Symptoms: Fever, Abdominal Pain
+----------------------------------------
+
+Patient ID: 1017
+Age: 29
+Gender: Male
+Date: 2023-01-03
+Condition: Fracture
+Medications: Painkillers, Rest
+Tests: X-Ray
+Symptoms: Pain, Swelling, Bruising
+----------------------------------------
+
+Patient ID: 1018
+Age: 88
+Gender: Female
+Date: 2020-06-21
+Condition: Anemia
+Medications: Iron Supplement
+Tests: Complete Blood Count, Blood Test
+Symptoms: Fatigue, Weakness
+----------------------------------------
+
+Patient ID: 1019
+Age: 40
+Gender: Male
+Date: 2024-04-28
+Condition: Cholecystitis
+Medications: Cholecystectomy, Antibiotics
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Jaundice
+----------------------------------------
+
+Patient ID: 1020
+Age: 55
+Gender: Female
+Date: 2022-03-07
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Swelling
+----------------------------------------
+
+Patient ID: 1021
+Age: 33
+Gender: Male
+Date: 2023-08-12
+Condition: Sinusitis
+Medications: Antibiotics, Nasal Spray
+Tests: Physical Exam
+Symptoms: Nasal Congestion, Facial Pain, Headache
+----------------------------------------
+
+Patient ID: 1022
+Age: 47
+Gender: Female
+Date: 2022-10-19
+Condition: Ovarian Cancer
+Medications: Chemotherapy
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Bloating, Fatigue
+----------------------------------------
+
+Patient ID: 1023
+Age: 59
+Gender: Other
+Date: 2021-12-26
+Condition: Osteoporosis
+Medications: Calcium Supplements, Vitamin D
+Tests: Bone Density Test, Blood Test
+Symptoms: Bone Pain, Fractures
+----------------------------------------
+
+Patient ID: 1024
+Age: 25
+Gender: Male
+Date: 2024-02-02
+Condition: Depression
+Medications: Sertraline, Therapy
+Tests: Mental Health Assessment
+Symptoms: Sadness, Loss of Interest, Fatigue
+----------------------------------------
+
+Patient ID: 1025
+Age: 70
+Gender: Female
+Date: 2022-09-15
+Condition: Hypertension
+Medications: Amlodipine, Hydrochlorothiazide
+Tests: Blood Pressure, ECG
+Symptoms: Headache, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1026
+Age: 42
+Gender: Male
+Date: 2023-06-22
+Condition: Gout
+Medications: Allopurinol, NSAIDs
+Tests: Blood Test, Joint Aspiration
+Symptoms: Joint Pain, Swelling, Redness
+----------------------------------------
+
+Patient ID: 1027
+Age: 19
+Gender: Female
+Date: 2021-11-08
+Condition: Acne
+Medications: Topical Cream, Cleansers
+Tests: Physical Exam
+Symptoms: Pimples, Blackheads, Whiteheads
+----------------------------------------
+
+Patient ID: 1028
+Age: 64
+Gender: Other
+Date: 2020-07-25
+Condition: COPD
+Medications: Inhalers, Oxygen Therapy
+Tests: Pulmonary Function Test, Chest X-Ray
+Symptoms: Shortness of Breath, Cough, Wheezing
+----------------------------------------
+
+Patient ID: 1029
+Age: 36
+Gender: Male
+Date: 2024-01-31
+Condition: Gastritis
+Medications: Antacids, Proton Pump Inhibitors
+Tests: Endoscopy, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1030
+Age: 61
+Gender: Female
+Date: 2022-06-18
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Weight Gain, Cold Sensitivity
+----------------------------------------
+Patient ID: 1031
+Age: 45
+Gender: Male
+Date: 2023-03-14
+Condition: Hypertension
+Medications: Amlodipine, Lisinopril
+Tests: Blood Pressure, ECG
+Symptoms: Headache, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1032
+Age: 28
+Gender: Female
+Date: 2021-10-10
+Condition: Gastroenteritis
+Medications: Fluids, Antiemetics
+Tests: Stool Test, Physical Exam
+Symptoms: Nausea, Vomiting, Diarrhea
+----------------------------------------
+
+Patient ID: 1033
+Age: 53
+Gender: Other
+Date: 2024-05-26
+Condition: Rheumatoid Arthritis
+Medications: Methotrexate, NSAIDs
+Tests: Blood Test, Joint X-Ray
+Symptoms: Joint Pain, Swelling, Stiffness
+----------------------------------------
+
+Patient ID: 1034
+Age: 39
+Gender: Male
+Date: 2022-12-02
+Condition: Migraine
+Medications: Sumatriptan
+Tests: Neurological Exam
+Symptoms: Headache, Nausea, Sensitivity to Light
+----------------------------------------
+
+Patient ID: 1035
+Age: 74
+Gender: Female
+Date: 2020-09-19
+Condition: Osteoarthritis
+Medications: Acetaminophen, NSAIDs
+Tests: X-Ray, Physical Exam
+Symptoms: Joint Pain, Stiffness, Limited Movement
+----------------------------------------
+
+Patient ID: 1036
+Age: 21
+Gender: Male
+Date: 2023-04-15
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Sneezing, Itching
+----------------------------------------
+
+Patient ID: 1037
+Age: 68
+Gender: Other
+Date: 2021-07-11
+Condition: Glaucoma
+Medications: Timolol
+Tests: Eye Exam
+Symptoms: Blurred Vision, Eye Pain
+----------------------------------------
+
+Patient ID: 1038
+Age: 43
+Gender: Female
+Date: 2024-02-20
+Condition: Anxiety Disorder
+Medications: Sertraline, Therapy
+Tests: Mental Health Assessment
+Symptoms: Anxiety, Restlessness, Insomnia
+----------------------------------------
+
+Patient ID: 1039
+Age: 26
+Gender: Male
+Date: 2022-11-16
+Condition: Sinusitis
+Medications: Antibiotics, Nasal Spray
+Tests: Physical Exam
+Symptoms: Nasal Congestion, Facial Pain, Headache
+----------------------------------------
+
+Patient ID: 1040
+Age: 80
+Gender: Female
+Date: 2020-06-24
+Condition: Atrial Fibrillation
+Medications: Warfarin, Diltiazem
+Tests: ECG, Blood Test
+Symptoms: Palpitations, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1041
+Age: 46
+Gender: Male
+Date: 2023-01-20
+Condition: Bronchitis
+Medications: Antibiotics, Cough Syrup
+Tests: Pulmonary Function Test, Blood Test
+Symptoms: Cough, Shortness of Breath, Chest Congestion
+----------------------------------------
+
+Patient ID: 1042
+Age: 30
+Gender: Other
+Date: 2021-09-04
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Weight Gain, Hair Loss
+----------------------------------------
+
+Patient ID: 1043
+Age: 58
+Gender: Female
+Date: 2023-08-30
+Condition: Urinary Tract Infection
+Medications: Antibiotics
+Tests: Urine Test, Physical Exam
+Symptoms: Frequent Urination, Burning Sensation
+----------------------------------------
+
+Patient ID: 1044
+Age: 77
+Gender: Other
+Date: 2020-02-14
+Condition: Stroke
+Medications: tPA, Aspirin
+Tests: MRI, CT Scan
+Symptoms: Weakness, Numbness, Speech Impairment
+----------------------------------------
+
+Patient ID: 1045
+Age: 56
+Gender: Male
+Date: 2024-05-24
+Condition: Pancreatitis
+Medications: Pancreatic Enzymes, Painkillers
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1046
+Age: 32
+Gender: Female
+Date: 2022-11-20
+Condition: Healthy
+Medications: None
+Tests: Physical Exam, Blood Test
+Symptoms: No Symptoms
+----------------------------------------
+
+Patient ID: 1047
+Age: 64
+Gender: Other
+Date: 2021-07-13
+Condition: Bacterial Infection
+Medications: Antibiotics
+Tests: Blood Test, Urine Test
+Symptoms: Fever, Fatigue, Body Aches
+----------------------------------------
+
+Patient ID: 1048
+Age: 30
+Gender: Male
+Date: 2023-04-18
+Condition: Fracture
+Medications: Painkillers, Cast
+Tests: X-Ray
+Symptoms: Pain, Swelling, Limited Movement
+----------------------------------------
+
+Patient ID: 1049
+Age: 89
+Gender: Female
+Date: 2020-09-26
+Condition: Anemia
+Medications: Iron Supplement
+Tests: Complete Blood Count, Blood Test
+Symptoms: Fatigue, Weakness, Pale Skin
+----------------------------------------
+
+Patient ID: 1050
+Age: 41
+Gender: Male
+Date: 2024-02-24
+Condition: Cholecystitis
+Medications: Cholecystectomy, Antibiotics
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+Patient ID: 1051
+Age: 27
+Gender: Female
+Date: 2022-10-28
+Condition: Migraine
+Medications: Sumatriptan
+Tests: Neurological Exam
+Symptoms: Headache, Nausea, Sensitivity to Light
+----------------------------------------
+
+Patient ID: 1052
+Age: 52
+Gender: Other
+Date: 2021-12-12
+Condition: Asthma
+Medications: Inhalers
+Tests: Pulmonary Function Test, Allergy Test
+Symptoms: Shortness of Breath, Wheezing, Cough
+----------------------------------------
+
+Patient ID: 1053
+Age: 37
+Gender: Male
+Date: 2024-05-30
+Condition: Diabetes
+Medications: Insulin
+Tests: Blood Test, Glucose Test
+Symptoms: Frequent Urination, Fatigue, Increased Thirst
+----------------------------------------
+
+Patient ID: 1054
+Age: 73
+Gender: Female
+Date: 2022-09-25
+Condition: Osteoarthritis
+Medications: Acetaminophen, NSAIDs
+Tests: X-Ray, Physical Exam
+Symptoms: Joint Pain, Stiffness, Limited Movement
+----------------------------------------
+
+Patient ID: 1055
+Age: 20
+Gender: Male
+Date: 2023-06-29
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Sneezing, Itching
+----------------------------------------
+
+Patient ID: 1056
+Age: 69
+Gender: Other
+Date: 2021-07-15
+Condition: Glaucoma
+Medications: Timolol
+Tests: Eye Exam
+Symptoms: Blurred Vision, Eye Pain
+----------------------------------------
+
+Patient ID: 1057
+Age: 44
+Gender: Female
+Date: 2024-02-26
+Condition: Anxiety Disorder
+Medications: Sertraline, Therapy
+Tests: Mental Health Assessment
+Symptoms: Anxiety, Restlessness, Insomnia
+----------------------------------------
+
+Patient ID: 1058
+Age: 27
+Gender: Male
+Date: 2022-11-22
+Condition: Sinusitis
+Medications: Antibiotics, Nasal Spray
+Tests: Physical Exam
+Symptoms: Nasal Congestion, Facial Pain, Headache
+----------------------------------------
+
+Patient ID: 1059
+Age: 81
+Gender: Female
+Date: 2020-06-28
+Condition: Atrial Fibrillation
+Medications: Warfarin, Diltiazem
+Tests: ECG, Blood Test
+Symptoms: Palpitations, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1060
+Age: 47
+Gender: Male
+Date: 2023-01-26
+Condition: Bronchitis
+Medications: Antibiotics, Cough Syrup
+Tests: Pulmonary Function Test, Blood Test
+Symptoms: Cough, Shortness of Breath, Chest Congestion
+----------------------------------------
+
+Patient ID: 1061
+Age: 31
+Gender: Other
+Date: 2021-09-10
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Weight Gain, Hair Loss
+----------------------------------------
+
+Patient ID: 1062
+Age: 59
+Gender: Female
+Date: 2023-09-05
+Condition: Urinary Tract Infection
+Medications: Antibiotics
+Tests: Urine Test, Physical Exam
+Symptoms: Frequent Urination, Burning Sensation
+----------------------------------------
+
+Patient ID: 1063
+Age: 78
+Gender: Other
+Date: 2020-02-20
+Condition: Stroke
+Medications: tPA, Aspirin
+Tests: MRI, CT Scan
+Symptoms: Weakness, Numbness, Speech Impairment
+----------------------------------------
+
+Patient ID: 1064
+Age: 57
+Gender: Male
+Date: 2024-05-28
+Condition: Pancreatitis
+Medications: Pancreatic Enzymes, Painkillers
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1065
+Age: 33
+Gender: Female
+Date: 2022-12-04
+Condition: Healthy
+Medications: None
+Tests: Physical Exam, Blood Test
+Symptoms: No Symptoms
+----------------------------------------
+
+Patient ID: 1066
+Age: 65
+Gender: Other
+Date: 2021-07-17
+Condition: Bacterial Infection
+Medications: Antibiotics
+Tests: Blood Test, Urine Test
+Symptoms: Fever, Fatigue, Body Aches
+----------------------------------------
+
+Patient ID: 1067
+Age: 31
+Gender: Male
+Date: 2023-04-20
+Condition: Fracture
+Medications: Painkillers, Cast
+Tests: X-Ray
+Symptoms: Pain, Swelling, Limited Movement
+----------------------------------------
+
+Patient ID: 1068
+Age: 90
+Gender: Female
+Date: 2020-09-28
+Condition: Anemia
+Medications: Iron Supplement
+Tests: Complete Blood Count, Blood Test
+Symptoms: Fatigue, Weakness, Pale Skin
+----------------------------------------
+
+Patient ID: 1069
+Age: 42
+Gender: Male
+Date: 2024-02-28
+Condition: Cholecystitis
+Medications: Cholecystectomy, Antibiotics
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1070
+Age: 42
+Gender: Female
+Date: 2022-10-30
+Condition: Migraine
+Medications: Sumatriptan
+Tests: Neurological Exam
+Symptoms: Headache, Nausea, Sensitivity to Light
+----------------------------------------
+
+Patient ID: 1071
+Age: 53
+Gender: Other
+Date: 2021-12-16
+Condition: Asthma
+Medications: Inhalers
+Tests: Pulmonary Function Test, Allergy Test
+Symptoms: Shortness of Breath, Wheezing, Cough
+----------------------------------------
+
+Patient ID: 1072
+Age: 38
+Gender: Male
+Date: 2024-06-01
+Condition: Diabetes
+Medications: Insulin
+Tests: Blood Test, Glucose Test
+Symptoms: Frequent Urination, Fatigue, Increased Thirst
+----------------------------------------
+
+Patient ID: 1073
+Age: 74
+Gender: Female
+Date: 2022-09-29
+Condition: Osteoarthritis
+Medications: Acetaminophen, NSAIDs
+Tests: X-Ray, Physical Exam
+Symptoms: Joint Pain, Stiffness, Limited Movement
+----------------------------------------
+
+Patient ID: 1074
+Age: 21
+Gender: Male
+Date: 2023-07-03
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Sneezing, Itching
+----------------------------------------
+
+Patient ID: 1075
+Age: 70
+Gender: Other
+Date: 2021-07-19
+Condition: Glaucoma
+Medications: Timolol
+Tests: Eye Exam
+Symptoms: Blurred Vision, Eye Pain
+----------------------------------------
+
+Patient ID: 1076
+Age: 45
+Gender: Female
+Date: 2024-03-03
+Condition: Anxiety Disorder
+Medications: Sertraline, Therapy
+Tests: Mental Health Assessment
+Symptoms: Anxiety, Restlessness, Insomnia
+----------------------------------------
+
+Patient ID: 1077
+Age: 28
+Gender: Male
+Date: 2022-11-24
+Condition: Sinusitis
+Medications: Antibiotics, Nasal Spray
+Tests: Physical Exam
+Symptoms: Nasal Congestion, Facial Pain, Headache
+----------------------------------------
+
+Patient ID: 1078
+Age: 82
+Gender: Female
+Date: 2020-07-01
+Condition: Atrial Fibrillation
+Medications: Warfarin, Diltiazem
+Tests: ECG, Blood Test
+Symptoms: Palpitations, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1079
+Age: 48
+Gender: Male
+Date: 2023-01-30
+Condition: Bronchitis
+Medications: Antibiotics, Cough Syrup
+Tests: Pulmonary Function Test, Blood Test
+Symptoms: Cough, Shortness of Breath, Chest Congestion
+----------------------------------------
+
+Patient ID: 1080
+Age: 32
+Gender: Other
+Date: 2021-09-16
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Weight Gain, Hair Loss
+----------------------------------------
+
+Patient ID: 1081
+Age: 60
+Gender: Female
+Date: 2023-09-10
+Condition: Urinary Tract Infection
+Medications: Antibiotics
+Tests: Urine Test, Physical Exam
+Symptoms: Frequent Urination, Burning Sensation
+----------------------------------------
+
+Patient ID: 1082
+Age: 79
+Gender: Other
+Date: 2020-02-24
+Condition: Stroke
+Medications: tPA, Aspirin
+Tests: MRI, CT Scan
+Symptoms: Weakness, Numbness, Speech Impairment
+----------------------------------------
+
+Patient ID: 1083
+Age: 58
+Gender: Male
+Date: 2024-06-05
+Condition: Pancreatitis
+Medications: Pancreatic Enzymes, Painkillers
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1084
+Age: 34
+Gender: Female
+Date: 2022-12-06
+Condition: Healthy
+Medications: None
+Tests: Physical Exam, Blood Test
+Symptoms: No Symptoms
+----------------------------------------
+
+Patient ID: 1085
+Age: 66
+Gender: Other
+Date: 2021-07-21
+Condition: Bacterial Infection
+Medications: Antibiotics
+Tests: Blood Test, Urine Test
+Symptoms: Fever, Fatigue, Body Aches
+----------------------------------------
+
+Patient ID: 1086
+Age: 32
+Gender: Male
+Date: 2023-04-23
+Condition: Fracture
+Medications: Painkillers, Cast
+Tests: X-Ray
+Symptoms: Pain, Swelling, Limited Movement
+----------------------------------------
+
+Patient ID: 1087
+Age: 91
+Gender: Female
+Date: 2020-09-30
+Condition: Anemia
+Medications: Iron Supplement
+Tests: Complete Blood Count, Blood Test
+Symptoms: Fatigue, Weakness, Pale Skin
+----------------------------------------
+
+Patient ID: 1088
+Age: 43
+Gender: Male
+Date: 2024-03-07
+Condition: Cholecystitis
+Medications: Cholecystectomy, Antibiotics
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1089
+Age: 28
+Gender: Female
+Date: 2022-11-26
+Condition: Migraine
+Medications: Sumatriptan
+Tests: Neurological Exam
+Symptoms: Headache, Nausea, Sensitivity to Light
+----------------------------------------
+
+Patient ID: 1090
+Age: 54
+Gender: Other
+Date: 2021-12-20
+Condition: Asthma
+Medications: Inhalers
+Tests: Pulmonary Function Test, Allergy Test
+Symptoms: Shortness of Breath, Wheezing, Cough
+----------------------------------------
+
+Patient ID: 1091
+Age: 39
+Gender: Male
+Date: 2024-06-09
+Condition: Diabetes
+Medications: Insulin
+Tests: Blood Test, Glucose Test
+Symptoms: Frequent Urination, Fatigue, Increased Thirst
+----------------------------------------
+
+Patient ID: 1092
+Age: 75
+Gender: Female
+Date: 2022-10-02
+Condition: Osteoarthritis
+Medications: Acetaminophen, NSAIDs
+Tests: X-Ray, Physical Exam
+Symptoms: Joint Pain, Stiffness, Limited Movement
+----------------------------------------
+
+Patient ID: 1093
+Age: 22
+Gender: Male
+Date: 2023-07-06
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Sneezing, Itching
+----------------------------------------
+
+Patient ID: 1094
+Age: 71
+Gender: Other
+Date: 2021-07-23
+Condition: Glaucoma
+Medications: Timolol
+Tests: Eye Exam
+Symptoms: Blurred Vision, Eye Pain
+----------------------------------------
+
+Patient ID: 1095
+Age: 46
+Gender: Female
+Date: 2024-03-10
+Condition: Anxiety Disorder
+Medications: Sertraline, Therapy
+Tests: Mental Health Assessment
+Symptoms: Anxiety, Restlessness, Insomnia
+----------------------------------------
+
+Patient ID: 1096
+Age: 29
+Gender: Male
+Date: 2022-11-28
+Condition: Sinusitis
+Medications: Antibiotics, Nasal Spray
+Tests: Physical Exam
+Symptoms: Nasal Congestion, Facial Pain, Headache
+----------------------------------------
+
+Patient ID: 1097
+Age: 83
+Gender: Female
+Date: 2020-07-03
+Condition: Atrial Fibrillation
+Medications: Warfarin, Diltiazem
+Tests: ECG, Blood Test
+Symptoms: Palpitations, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1098
+Age: 49
+Gender: Male
+Date: 2023-02-03
+Condition: Bronchitis
+Medications: Antibiotics, Cough Syrup
+Tests: Pulmonary Function Test, Blood Test
+Symptoms: Cough, Shortness of Breath, Chest Congestion
+----------------------------------------
+
+Patient ID: 1099
+Age: 33
+Gender: Other
+Date: 2021-09-22
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Weight Gain, Hair Loss
+----------------------------------------
+
+Patient ID: 1100
+Age: 61
+Gender: Female
+Date: 2023-09-15
+Condition: Urinary Tract Infection
+Medications: Antibiotics
+Tests: Urine Test, Physical Exam
+Symptoms: Frequent Urination, Burning Sensation
+----------------------------------------
+
+Patient ID: 1101
+Age: 80
+Gender: Male
+Date: 2020-02-28
+Condition: Stroke
+Medications: tPA, Aspirin
+Tests: MRI, CT Scan
+Symptoms: Weakness, Numbness, Speech Impairment
+----------------------------------------
+
+Patient ID: 1102
+Age: 59
+Gender: Female
+Date: 2024-06-12
+Condition: Pancreatitis
+Medications: Pancreatic Enzymes, Painkillers
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1103
+Age: 35
+Gender: Male
+Date: 2022-12-08
+Condition: Healthy
+Medications: None
+Tests: Physical Exam, Blood Test
+Symptoms: No Symptoms
+----------------------------------------
+
+Patient ID: 1104
+Age: 67
+Gender: Other
+Date: 2021-07-25
+Condition: Bacterial Infection
+Medications: Antibiotics
+Tests: Blood Test, Urine Test
+Symptoms: Fever, Fatigue, Body Aches
+----------------------------------------
+
+Patient ID: 1105
+Age: 33
+Gender: Male
+Date: 2023-04-26
+Condition: Fracture
+Medications: Painkillers, Cast
+Tests: X-Ray
+Symptoms: Pain, Swelling, Limited Movement
+----------------------------------------
+
+Patient ID: 1106
+Age: 92
+Gender: Female
+Date: 2020-10-02
+Condition: Anemia
+Medications: Iron Supplement
+Tests: Complete Blood Count, Blood Test
+Symptoms: Fatigue, Weakness, Pale Skin
+----------------------------------------
+
+Patient ID: 1107
+Age: 44
+Gender: Male
+Date: 2024-03-13
+Condition: Cholecystitis
+Medications: Cholecystectomy, Antibiotics
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1108
+Age: 29
+Gender: Female
+Date: 2022-11-30
+Condition: Migraine
+Medications: Sumatriptan
+Tests: Neurological Exam
+Symptoms: Headache, Nausea, Sensitivity to Light
+----------------------------------------
+
+Patient ID: 1109
+Age: 55
+Gender: Other
+Date: 2021-12-24
+Condition: Asthma
+Medications: Inhalers
+Tests: Pulmonary Function Test, Allergy Test
+Symptoms: Shortness of Breath, Wheezing, Cough
+----------------------------------------
+
+Patient ID: 1110
+Age: 40
+Gender: Male
+Date: 2024-06-16
+Condition: Diabetes
+Medications: Insulin
+Tests: Blood Test, Glucose Test
+Symptoms: Frequent Urination, Fatigue, Increased Thirst
+----------------------------------------
+
+Patient ID: 1111
+Age: 76
+Gender: Female
+Date: 2022-10-04
+Condition: Osteoarthritis
+Medications: Acetaminophen, NSAIDs
+Tests: X-Ray, Physical Exam
+Symptoms: Joint Pain, Stiffness, Limited Movement
+----------------------------------------
+
+Patient ID: 1112
+Age: 23
+Gender: Male
+Date: 2023-07-09
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Sneezing, Itching
+----------------------------------------
+
+Patient ID: 1113
+Age: 72
+Gender: Other
+Date: 2021-07-27
+Condition: Glaucoma
+Medications: Timolol
+Tests: Eye Exam
+Symptoms: Blurred Vision, Eye Pain
+----------------------------------------
+
+Patient ID: 1114
+Age: 47
+Gender: Female
+Date: 2024-03-16
+Condition: Anxiety Disorder
+Medications: Sertraline, Therapy
+Tests: Mental Health Assessment
+Symptoms: Anxiety, Restlessness, Insomnia
+----------------------------------------
+
+Patient ID: 1115
+Age: 30
+Gender: Male
+Date: 2022-12-02
+Condition: Sinusitis
+Medications: Antibiotics, Nasal Spray
+Tests: Physical Exam
+Symptoms: Nasal Congestion, Facial Pain, Headache
+----------------------------------------
+
+Patient ID: 1116
+Age: 84
+Gender: Female
+Date: 2020-07-05
+Condition: Atrial Fibrillation
+Medications: Warfarin, Diltiazem
+Tests: ECG, Blood Test
+Symptoms: Palpitations, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1117
+Age: 50
+Gender: Male
+Date: 2023-02-06
+Condition: Bronchitis
+Medications: Antibiotics, Cough Syrup
+Tests: Pulmonary Function Test, Blood Test
+Symptoms: Cough, Shortness of Breath, Chest Congestion
+----------------------------------------
+
+Patient ID: 1118
+Age: 34
+Gender: Other
+Date: 2021-09-26
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Weight Gain, Hair Loss
+----------------------------------------
+
+Patient ID: 1119
+Age: 62
+Gender: Female
+Date: 2023-09-20
+Condition: Urinary Tract Infection
+Medications: Antibiotics
+Tests: Urine Test, Physical Exam
+Symptoms: Frequent Urination, Burning Sensation
+----------------------------------------
+
+Patient ID: 1120
+Age: 81
+Gender: Other
+Date: 2020-03-05
+Condition: Stroke
+Medications: tPA, Aspirin
+Tests: MRI, CT Scan
+Symptoms: Weakness, Numbness, Speech Impairment
+----------------------------------------
+
+Patient ID: 1121
+Age: 60
+Gender: Male
+Date: 2024-06-19
+Condition: Pancreatitis
+Medications: Pancreatic Enzymes, Painkillers
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1122
+Age: 36
+Gender: Female
+Date: 2022-12-10
+Condition: Healthy
+Medications: None
+Tests: Physical Exam, Blood Test
+Symptoms: No Symptoms
+----------------------------------------
+
+Patient ID: 1123
+Age: 68
+Gender: Other
+Date: 2021-07-29
+Condition: Bacterial Infection
+Medications: Antibiotics
+Tests: Blood Test, Urine Test
+Symptoms: Fever, Fatigue, Body Aches
+----------------------------------------
+
+Patient ID: 1124
+Age: 34
+Gender: Male
+Date: 2023-04-29
+Condition: Fracture
+Medications: Painkillers, Cast
+Tests: X-Ray
+Symptoms: Pain, Swelling, Limited Movement
+----------------------------------------
+
+Patient ID: 1125
+Age: 93
+Gender: Female
+Date: 2020-10-04
+Condition: Anemia
+Medications: Iron Supplement
+Tests: Complete Blood Count, Blood Test
+Symptoms: Fatigue, Weakness, Pale Skin
+----------------------------------------
+
+Patient ID: 1126
+Age: 45
+Gender: Male
+Date: 2024-03-19
+Condition: Cholecystitis
+Medications: Cholecystectomy, Antibiotics
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1127
+Age: 30
+Gender: Female
+Date: 2022-12-05
+Condition: Migraine
+Medications: Sumatriptan
+Tests: Neurological Exam
+Symptoms: Headache, Nausea, Sensitivity to Light
+----------------------------------------
+
+Patient ID: 1128
+Age: 56
+Gender: Other
+Date: 2021-12-28
+Condition: Asthma
+Medications: Inhalers
+Tests: Pulmonary Function Test, Allergy Test
+Symptoms: Shortness of Breath, Wheezing, Cough
+----------------------------------------
+
+Patient ID: 1129
+Age: 41
+Gender: Male
+Date: 2024-06-23
+Condition: Diabetes
+Medications: Insulin
+Tests: Blood Test, Glucose Test
+Symptoms: Frequent Urination, Fatigue, Increased Thirst
+----------------------------------------
+
+Patient ID: 1130
+Age: 77
+Gender: Female
+Date: 2022-10-06
+Condition: Osteoarthritis
+Medications: Acetaminophen, NSAIDs
+Tests: X-Ray, Physical Exam
+Symptoms: Joint Pain, Stiffness, Limited Movement
+----------------------------------------
+
+Patient ID: 1131
+Age: 24
+Gender: Male
+Date: 2023-07-12
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Sneezing, Itching
+----------------------------------------
+
+Patient ID: 1132
+Age: 73
+Gender: Other
+Date: 2021-07-31
+Condition: Glaucoma
+Medications: Timolol
+Tests: Eye Exam
+Symptoms: Blurred Vision, Eye Pain
+----------------------------------------
+
+Patient ID: 1133
+Age: 48
+Gender: Female
+Date: 2024-03-22
+Condition: Anxiety Disorder
+Medications: Sertraline, Therapy
+Tests: Mental Health Assessment
+Symptoms: Anxiety, Restlessness, Insomnia
+----------------------------------------
+
+Patient ID: 1134
+Age: 31
+Gender: Male
+Date: 2022-12-07
+Condition: Sinusitis
+Medications: Antibiotics, Nasal Spray
+Tests: Physical Exam
+Symptoms: Nasal Congestion, Facial Pain, Headache
+----------------------------------------
+
+Patient ID: 1135
+Age: 85
+Gender: Female
+Date: 2020-07-07
+Condition: Atrial Fibrillation
+Medications: Warfarin, Diltiazem
+Tests: ECG, Blood Test
+Symptoms: Palpitations, Dizziness, Fatigue
+----------------------------------------
+
+Patient ID: 1136
+Age: 51
+Gender: Male
+Date: 2023-02-09
+Condition: Bronchitis
+Medications: Antibiotics, Cough Syrup
+Tests: Pulmonary Function Test, Blood Test
+Symptoms: Cough, Shortness of Breath, Chest Congestion
+----------------------------------------
+
+Patient ID: 1137
+Age: 35
+Gender: Other
+Date: 2021-09-30
+Condition: Hypothyroidism
+Medications: Levothyroxine
+Tests: Blood Test
+Symptoms: Fatigue, Weight Gain, Hair Loss
+----------------------------------------
+
+Patient ID: 1138
+Age: 63
+Gender: Female
+Date: 2023-09-25
+Condition: Urinary Tract Infection
+Medications: Antibiotics
+Tests: Urine Test, Physical Exam
+Symptoms: Frequent Urination, Burning Sensation
+----------------------------------------
+
+Patient ID: 1139
+Age: 82
+Gender: Other
+Date: 2020-03-08
+Condition: Stroke
+Medications: tPA, Aspirin
+Tests: MRI, CT Scan
+Symptoms: Weakness, Numbness, Speech Impairment
+----------------------------------------
+
+Patient ID: 1140
+Age: 61
+Gender: Male
+Date: 2024-06-26
+Condition: Pancreatitis
+Medications: Pancreatic Enzymes, Painkillers
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1141
+Age: 37
+Gender: Female
+Date: 2022-12-12
+Condition: Healthy
+Medications: None
+Tests: Physical Exam, Blood Test
+Symptoms: No Symptoms
+----------------------------------------
+
+Patient ID: 1142
+Age: 69
+Gender: Other
+Date: 2021-08-02
+Condition: Bacterial Infection
+Medications: Antibiotics
+Tests: Blood Test, Urine Test
+Symptoms: Fever, Fatigue, Body Aches
+----------------------------------------
+
+Patient ID: 1143
+Age: 35
+Gender: Male
+Date: 2023-05-02
+Condition: Fracture
+Medications: Painkillers, Cast
+Tests: X-Ray
+Symptoms: Pain, Swelling, Limited Movement
+----------------------------------------
+
+Patient ID: 1144
+Age: 94
+Gender: Female
+Date: 2020-10-06
+Condition: Anemia
+Medications: Iron Supplement
+Tests: Complete Blood Count, Blood Test
+Symptoms: Fatigue, Weakness, Pale Skin
+----------------------------------------
+
+Patient ID: 1145
+Age: 46
+Gender: Male
+Date: 2024-03-25
+Condition: Cholecystitis
+Medications: Cholecystectomy, Antibiotics
+Tests: CT Scan, Blood Test
+Symptoms: Abdominal Pain, Nausea, Vomiting
+----------------------------------------
+
+Patient ID: 1146
+Age: 31
+Gender: Female
+Date: 2022-12-09
+Condition: Migraine
+Medications: Sumatriptan
+Tests: Neurological Exam
+Symptoms: Headache, Nausea, Sensitivity to Light
+----------------------------------------
+
+Patient ID: 1147
+Age: 57
+Gender: Other
+Date: 2021-12-31
+Condition: Asthma
+Medications: Inhalers
+Tests: Pulmonary Function Test, Allergy Test
+Symptoms: Shortness of Breath, Wheezing, Cough
+----------------------------------------
+
+Patient ID: 1148
+Age: 42
+Gender: Male
+Date: 2024-06-30
+Condition: Diabetes
+Medications: Insulin
+Tests: Blood Test, Glucose Test
+Symptoms: Frequent Urination, Fatigue, Increased Thirst
+----------------------------------------
+
+Patient ID: 1149
+Age: 78
+Gender: Female
+Date: 2022-10-08
+Condition: Osteoarthritis
+Medications: Acetaminophen, NSAIDs
+Tests: X-Ray, Physical Exam
+Symptoms: Joint Pain, Stiffness, Limited Movement
+----------------------------------------
+
+Patient ID: 1150
+Age: 25
+Gender: Male
+Date: 2023-07-15
+Condition: Allergic Rhinitis
+Medications: Cetirizine
+Tests: Allergy Test, Physical Exam
+Symptoms: Runny Nose, Sneezing, Itching
+----------------------------------------

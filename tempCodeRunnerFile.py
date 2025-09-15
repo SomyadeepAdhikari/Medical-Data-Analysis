@@ -1,0 +1,1 @@
+Find the patients who have a certain symptom(fatigue).
