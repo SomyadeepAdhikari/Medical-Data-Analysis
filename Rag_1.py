@@ -2,7 +2,11 @@ import os
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
 from langchain_chroma import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+# NOTE: Replaced GoogleGenerativeAIEmbeddings with a free HuggingFace embedding model.
+# Default model: "sentence-transformers/all-MiniLM-L6-v2" (small, fast, multilingual-ish coverage)
+# You can change via environment variable HUGGINGFACE_EMBEDDING_MODEL.
 
 # Define the directory containing the text file and the persistent directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -32,12 +36,11 @@ if not os.path.exists(persistent_directory):
     print(f"Number of document chunks: {len(docs)}")
     print(f"Sample chunk:\n{docs[0].page_content}\n")
 
-    # Create embeddings
-    print("\n--- Creating embeddings ---")
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004"
-    )   # Update to a valid embedding model if needed
-    print("\n--- Finished creating embeddings ---")
+    # Create embeddings (HuggingFace local / hub model)
+    print("\n--- Creating embeddings (HuggingFace) ---")
+    embedding_model_name = os.getenv("HUGGINGFACE_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    print(f"\n--- Finished creating embeddings with model: {embedding_model_name} ---")
 
     # Create the vector store and persist it automatically
     print("\n--- Creating vector store ---")
