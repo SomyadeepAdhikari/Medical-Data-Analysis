@@ -9,6 +9,9 @@ chromadb>=0.4.0
 transformers>=4.40.0
 sentence-transformers>=2.7.0
 huggingface-hub>=0.22.0
+torch>=2.1.0
+accelerate>=0.27.0
+safetensors>=0.4.2
 
 # Utilities / HTTP
 requests>=2.31.0

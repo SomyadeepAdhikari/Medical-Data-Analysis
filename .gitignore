@@ -32,5 +32,4 @@ Thumbs.db
 
 # Project specific
 db/
-*.parquet
 tempCodeRunnerFile.py

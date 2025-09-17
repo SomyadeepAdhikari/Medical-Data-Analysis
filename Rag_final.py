@@ -7,6 +7,14 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
 from langchain.schema.output_parser import StrOutputParser
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import importlib
+
+# Diagnostics: verify torch availability early
+if importlib.util.find_spec("torch") is None:
+    print("[WARNING] torch not installed. Install with: pip install torch --upgrade")
+else:
+    import torch  # noqa: E402
+    print(f"[INFO] torch version: {torch.__version__}; CUDA available: {torch.cuda.is_available()}")
 
 # Load environment variables
 load_dotenv()
@@ -40,26 +48,56 @@ db = Chroma(persist_directory=persistent_directory, embedding_function=embedding
 
 retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 3})
 
-hf_model_name = os.getenv("HUGGINGFACE_LLM_MODEL", "mistralai/Mistral-7B-Instruct-v0.3")
+hf_model_name = os.getenv("HUGGINGFACE_LLM_MODEL", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 device = os.getenv("HUGGINGFACE_DEVICE", "cpu")
 temperature = float(os.getenv("LLM_TEMPERATURE", 0.2))
+skip_model = os.getenv("SKIP_LLM", "false").lower() in {"1", "true", "yes"}
 
-print(f"Loading HuggingFace model: {hf_model_name} on {device}")
-tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
-model_ref = AutoModelForCausalLM.from_pretrained(
-    hf_model_name,
-    trust_remote_code=True,
-    device_map="auto" if device != "cpu" else None,
-)
-generation_pipeline = pipeline(
-    "text-generation",
-    model=model_ref,
-    tokenizer=tokenizer,
-    device=0 if device != "cpu" else -1,
-    max_new_tokens=512,
-    temperature=temperature,
-)
+generation_pipeline = None
 parser = StrOutputParser()
+
+def load_generation_pipeline():
+    global generation_pipeline
+    if generation_pipeline is not None:
+        return generation_pipeline
+    if skip_model:
+        print("[INFO] SKIP_LLM=true -> Skipping model load. Retrieval only mode.")
+        return None
+    print(f"Loading HuggingFace model: {hf_model_name} on {device}")
+    if device != "cpu":
+        print("[INFO] If you encounter CUDA OOM, set HUGGINGFACE_DEVICE=cpu or choose a smaller model.")
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
+        model_ref = AutoModelForCausalLM.from_pretrained(
+            hf_model_name,
+            trust_remote_code=True,
+            device_map="auto" if device != "cpu" else None,
+        )
+        generation_pipeline = pipeline(
+            "text-generation",
+            model=model_ref,
+            tokenizer=tokenizer,
+            device=0 if device != "cpu" else -1,
+            max_new_tokens=512,
+            temperature=temperature,
+        )
+    except Exception as e:
+        print(f"[ERROR] Failed to load model {hf_model_name}: {e}\nFalling back to 'distilgpt2'.")
+        try:
+            tokenizer = AutoTokenizer.from_pretrained("distilgpt2")
+            model_ref = AutoModelForCausalLM.from_pretrained("distilgpt2")
+            generation_pipeline = pipeline(
+                "text-generation",
+                model=model_ref,
+                tokenizer=tokenizer,
+                device=0 if device != "cpu" else -1,
+                max_new_tokens=256,
+                temperature=temperature,
+            )
+        except Exception as e2:
+            print(f"[FATAL] Could not load fallback model: {e2}. You can set HUGGINGFACE_LLM_MODEL=sshleifer/tiny-gpt2 for a very small test model.")
+            generation_pipeline = None
+    return generation_pipeline
 
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 SARVAM_BASE = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")
@@ -112,12 +150,21 @@ while True:
 
     messages.append(HumanMessage(content=combined_prompt))
 
-    raw_output = generation_pipeline(
-        combined_prompt,
-        do_sample=False,
-        num_return_sequences=1,
-    )[0]["generated_text"]
-    response_text = raw_output[len(combined_prompt):].strip() or raw_output.strip()
+    pipe = load_generation_pipeline()
+    if pipe is None:
+        print("[WARN] No generation pipeline available; showing retrieved context only.")
+        print("\n--- Retrieved Context ---\n")
+        print(docs_text[:1500])
+        continue
+    try:
+        raw_output = pipe(
+            combined_prompt,
+            do_sample=False,
+            num_return_sequences=1,
+        )[0]["generated_text"]
+        response_text = raw_output[len(combined_prompt):].strip() or raw_output.strip()
+    except Exception as gen_err:
+        response_text = f"Generation failed: {gen_err}"
     if len(response_text) > 4000:
         response_text = response_text[:4000]
     if original_lang != "en":
@@ -145,6 +192,3 @@ Are there common symptoms that appear across multiple conditions?
 What are the main findings about Coronary Artery Disease in the dataset?
 """
 
-
-
-#  Removed hardcoded API key line (security). Use environment variables instead.
