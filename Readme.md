@@ -57,7 +57,7 @@ Run when the dataset changes or first time:
 ```
 python Rag_1.py
 ```
-This loads `Documents/gemini_dataset.txt`, splits it, embeds chunks, and persists to `db/chroma_db`.
+This loads `Documents/train.parquet`, splits it, embeds chunks, and persists to `db/chroma_db`.
 
 ## 7. Running RAG
 Interactive loop:

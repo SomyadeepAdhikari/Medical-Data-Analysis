@@ -1,5 +1,6 @@
 import os
 import json
+import argparse
 import requests
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
@@ -10,11 +11,15 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import importlib
 
 # Diagnostics: verify torch availability early
-if importlib.util.find_spec("torch") is None:
-    print("[WARNING] torch not installed. Install with: pip install torch --upgrade")
-else:
-    import torch  # noqa: E402
-    print(f"[INFO] torch version: {torch.__version__}; CUDA available: {torch.cuda.is_available()}")
+try:
+    _util = getattr(importlib, "util", None)
+    if _util and _util.find_spec("torch") is not None:
+        import torch  # type: ignore
+        print(f"[INFO] torch version: {torch.__version__}; CUDA available: {torch.cuda.is_available()}")
+    else:
+        print("[WARNING] torch not installed. Install with: pip install torch --upgrade")
+except Exception:
+    print("[WARNING] torch detection failed.")
 
 # Load environment variables
 load_dotenv()
@@ -41,12 +46,12 @@ Environment Variables (update your .env):
     SARVAM_BASE_URL=https://api.sarvam.ai
 """
 
-# Initialize embeddings and vector store (HuggingFace)
-embedding_model_name = os.getenv("HUGGINGFACE_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
-
-retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+def init_vector_store():
+    embedding_model_name = os.getenv("HUGGINGFACE_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
+    retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+    return retriever
 
 hf_model_name = os.getenv("HUGGINGFACE_LLM_MODEL", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 device = os.getenv("HUGGINGFACE_DEVICE", "cpu")
@@ -123,46 +128,61 @@ def detect_language_simple(text: str) -> str:
         return "en"
     return "unknown"
 
-# Set up initial message context
-messages = [SystemMessage(content="You are a helpful assistant that analyzes health report data.")]
-
-# Start interactive loop
-while True:
-    query = input("\nYou: ")
-    if query.lower() == "exit":
-        print("Goodbye!")
-        break
-
-    # Language handling
-    original_lang = detect_language_simple(query)
-    working_query = query if original_lang == "en" else sarvam_translate(query, target_lang="en")
-
-    # Retrieve relevant documents
-    relevant_docs = retriever.invoke(working_query)
-    docs_text = "\n\n".join([doc.page_content for doc in relevant_docs])
-
-    # Build the prompt
-    combined_prompt = (
-        f"Question: {working_query}\n\n"
+def build_prompt(question: str, docs_text: str) -> str:
+    return (
+        f"Question: {question}\n\n"
         f"Relevant Documents:\n{docs_text}\n\n"
         "Provide a concise factual answer based ONLY on the documents above. If the answer is not present, reply exactly: I'm not sure."
     )
 
+def answer_query(query: str, retriever, messages=None):
+    if messages is None:
+        messages = [SystemMessage(content="You are a helpful assistant that analyzes health report data.")]
+    original_lang = detect_language_simple(query)
+    working_query = query if original_lang == "en" else sarvam_translate(query, target_lang="en")
+    relevant_docs = retriever.invoke(working_query)
+    docs_text = "\n\n".join([doc.page_content for doc in relevant_docs])
+    combined_prompt = build_prompt(working_query, docs_text)
+    # We intentionally allow heterogeneous message objects; type checkers may warn but runtime is fine.
     messages.append(HumanMessage(content=combined_prompt))
-
     pipe = load_generation_pipeline()
     if pipe is None:
-        print("[WARN] No generation pipeline available; showing retrieved context only.")
-        print("\n--- Retrieved Context ---\n")
-        print(docs_text[:1500])
-        continue
+        return {"answer": None, "context": docs_text, "note": "No generation pipeline available."}
     try:
         raw_output = pipe(
             combined_prompt,
             do_sample=False,
             num_return_sequences=1,
         )[0]["generated_text"]
-        response_text = raw_output[len(combined_prompt):].strip() or raw_output.strip()
+        # Remove the prompt portion robustly (handle potential whitespace differences)
+        if raw_output.startswith(combined_prompt):
+            response_text = raw_output[len(combined_prompt):]
+        else:
+            # Attempt split by prompt sentinel lines
+            parts = raw_output.split("Relevant Documents:")
+            response_text = raw_output
+            if len(parts) > 1:
+                # Take last segment after docs block
+                response_text = parts[-1]
+        # Final cleanup
+        response_text = response_text.strip()
+        # Remove repeated instruction sentence if model echoes it multiple times
+        dedupe_line = "If the answer is not present, reply exactly: I'm not sure."
+        if response_text:
+            lines = [l for l in response_text.splitlines() if l.strip()]
+            # Collapse consecutive duplicates of the instruction line
+            cleaned = []
+            prev = None
+            for l in lines:
+                if l.strip() == dedupe_line and prev == dedupe_line:
+                    continue
+                cleaned.append(l)
+                prev = l.strip()
+            response_text = "\n".join(cleaned)
+            # If answer is only the instruction line repeated, treat as uncertainty
+            unique_non_instr = [l for l in cleaned if l.strip() != dedupe_line]
+            if not unique_non_instr:
+                response_text = "I'm not sure."
     except Exception as gen_err:
         response_text = f"Generation failed: {gen_err}"
     if len(response_text) > 4000:
@@ -170,25 +190,73 @@ while True:
     if original_lang != "en":
         response_text = sarvam_translate(response_text, target_lang=original_lang)
     messages.append(AIMessage(content=response_text))
+    return {"answer": response_text, "context": docs_text, "note": None}
 
-    # Print the response
-    print("\n--- LLM Response ---")
-    print(response_text)
+def interactive_mode(retriever):
+    messages = [SystemMessage(content="You are a helpful assistant that analyzes health report data.")]
+    print("Entering interactive mode. Type 'exit' to quit.")
+    while True:
+        query = input("\nYou: ")
+        if query.lower() == "exit":
+            print("Goodbye!")
+            break
+        result = answer_query(query, retriever, messages)
+        if result["answer"] is None:
+            print("[WARN] No model answer. Showing retrieved context snippet:\n")
+            print(result["context"][:1500])
+        else:
+            print("\n--- LLM Response ---")
+            print(result["answer"])
+
+def single_shot_mode(retriever, query: str):
+    result = answer_query(query, retriever)
+    if result["answer"] is None:
+        print("[NO_ANSWER] Model unavailable. Retrieved context snippet:\n")
+        print(result["context"][:1500])
+    else:
+        print("--- LLM Response ---")
+        print(result["answer"])
+
+def parse_args():
+    parser_local = argparse.ArgumentParser(description="Unified RAG QA (interactive or single question)")
+    parser_local.add_argument("--query", "-q", type=str, help="Single question to answer (activates single-shot mode)")
+    parser_local.add_argument("--mode", choices=["auto", "interactive", "single"], default="auto", help="Mode selection: auto picks interactive if no --query provided")
+    return parser_local.parse_args()
+
+def main():
+    args = parse_args()
+    retriever = init_vector_store()
+    if args.mode == "interactive" or (args.mode == "auto" and not args.query):
+        interactive_mode(retriever)
+    else:
+        if not args.query:
+            raise SystemExit("--query is required for single-shot mode (or omit for interactive).")
+        single_shot_mode(retriever, args.query)
+
+if __name__ == "__main__":
+    main()
 
 
 """ 
+Sample questions (for reference):
+ - Find the number of patients with a specific condition.
+ - Patients who have undergone a specific test (Blood Glucose).
+ - Patients who have a certain symptom (fatigue).
+ - Oldest and youngest patients.
+ - Patients with a specific medication.
+ - Patients by gender and age range.
+ - Patients who have no symptoms.
+ - Which condition were more common in ages 20-30 according to the dataset? 
+ - How effective was Insulin based on the cases provided?
+ - Are there common symptoms that appear across multiple conditions?
+ - What are the main findings about Coronary Artery Disease in the dataset?
 
-Find the number of patients with a specific condition.
-Get the list of patients who have undergone a specific test(Blood Glucose).
-Find the patients who have a certain symptom(fatigue).
-Find the oldest and youngest patients in the dataset.
-Retrieve the patients who have a specific medication.
-Get the list of patients who have a specific gender and age range.
-Get the list of patients who have no symptoms.
+CLI Usage Examples:
+    Interactive:  python Rag_final.py
+    Single-shot: python Rag_final.py --query "List key diabetes biomarkers" 
+    Force mode:  python Rag_final.py --mode interactive
+    Auto mode:   python Rag_final.py --mode auto --query "What is CAD?"
 
-Which condition were more common in ages 20-30 according to the dataset? 
-How effective was Insulin based on the cases provided?
-Are there common symptoms that appear across multiple conditions?
-What are the main findings about Coronary Artery Disease in the dataset?
+Deprecated: The separate one_to_one_question_rag.py script can now be removed or left as a thin wrapper.
 """
 
