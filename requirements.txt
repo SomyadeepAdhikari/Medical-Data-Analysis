@@ -1,28 +1,35 @@
 # Core dependencies for Medical Data Analysis RAG project (Free stack)
-langchain>=0.1.0
-langchain-community>=0.0.10
-langchain-chroma>=0.1.0
-python-dotenv>=1.0.0
-chromadb>=0.4.0
+# Pinned to a known-compatible set to avoid breaking changes in LangChain/Chroma.
+langchain==0.1.16
+langchain-community==0.0.35
+langchain-chroma==0.1.1
+python-dotenv==1.0.1
+chromadb==0.4.24
 
 # HuggingFace & NLP
-transformers>=4.40.0
-sentence-transformers>=2.7.0
-huggingface-hub>=0.22.0
-torch>=2.1.0
-accelerate>=0.27.0
-safetensors>=0.4.2
+transformers==4.43.3
+sentence-transformers==3.0.1
+huggingface-hub==0.24.5
+torch==2.3.1
+accelerate==0.33.0
+safetensors==0.4.4
+
+# Torch-free embedding backend fallback
+fastembed==0.2.9
 
 # Utilities / HTTP
-requests>=2.31.0
+requests==2.32.3
 
 # Data processing
-pandas>=2.0.0
-numpy>=1.24.0
-pyarrow>=15.0.0
+pandas==2.2.2
+numpy==1.26.4
+pyarrow==17.0.0
 
-# Optional: language detection improvement (uncomment to use)
-# langdetect>=1.0.9
+# UI
+streamlit==1.38.0
+
+# Optional: language detection improvement
+langdetect==1.0.9
 
 # Removed paid / proprietary deps:
 # - langchain-google-genai

@@ -5,10 +5,22 @@ import requests
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
+try:
+    from langchain_community.embeddings import FastEmbedEmbeddings  # type: ignore
+    _FASTEMBED = True
+except Exception:
+    _FASTEMBED = False
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
 from langchain.schema.output_parser import StrOutputParser
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import importlib
+
+# Optional better language detection (langdetect) fallback to heuristic
+try:
+    from langdetect import detect  # type: ignore
+    _LANGDETECT_AVAILABLE = True
+except Exception:
+    _LANGDETECT_AVAILABLE = False
 
 # Diagnostics: verify torch availability early
 try:
@@ -48,7 +60,15 @@ Environment Variables (update your .env):
 
 def init_vector_store():
     embedding_model_name = os.getenv("HUGGINGFACE_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
-    embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
+    embeddings = None
+    if _FASTEMBED:
+        try:
+            print("[INFO] Using FastEmbedEmbeddings for retrieval (torch-free)")
+            embeddings = FastEmbedEmbeddings()
+        except Exception as fe:
+            print(f"[WARN] FastEmbedEmbeddings failed: {fe}. Falling back to HuggingFaceEmbeddings: {embedding_model_name}")
+    if embeddings is None:
+        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
     retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 3})
     return retriever
@@ -68,6 +88,17 @@ def load_generation_pipeline():
     if skip_model:
         print("[INFO] SKIP_LLM=true -> Skipping model load. Retrieval only mode.")
         return None
+    # Auto-downsize safeguard for CPU when a large model is requested
+    allow_large_cpu = os.getenv("ALLOW_LARGE_CPU_MODEL", "false").lower() in {"1", "true", "yes"}
+    large_markers = ["mistral", "mistralai/", "mixtral", "qwen", "phi-3", "zephyr-7b", "7b", "8b", "13b", "70b"]
+    if device == "cpu" and not allow_large_cpu:
+        lower_name = hf_model_name.lower()
+        is_tiny = ("tinyllama" in lower_name) or ("tiny" in lower_name and "gpt2" in lower_name)
+        if not is_tiny and any(m in lower_name for m in large_markers):
+            print(f"[WARN] {hf_model_name} appears large for CPU. Switching to TinyLlama. Set ALLOW_LARGE_CPU_MODEL=true to override.")
+            # Switch to a lighter default
+            os.environ["HUGGINGFACE_LLM_MODEL"] = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+            globals()["hf_model_name"] = os.getenv("HUGGINGFACE_LLM_MODEL")
     print(f"Loading HuggingFace model: {hf_model_name} on {device}")
     if device != "cpu":
         print("[INFO] If you encounter CUDA OOM, set HUGGINGFACE_DEVICE=cpu or choose a smaller model.")
@@ -123,10 +154,25 @@ def sarvam_translate(text: str, target_lang: str = "en") -> str:
         return text
 
 def detect_language_simple(text: str) -> str:
-    ascii_ratio = sum(c.isascii() for c in text) / max(1, len(text))
-    if ascii_ratio > 0.95:
-        return "en"
-    return "unknown"
+    """Return ISO-ish language code if detectable.
+
+    Priority:
+    1. langdetect if installed (best-effort; may raise errors on short text)
+    2. ASCII heuristic fallback -> 'en' if >95% ascii else 'unknown'
+    """
+    if _LANGDETECT_AVAILABLE:
+        try:
+            # langdetect can misclassify very short strings; guard minimal length
+            if len(text.strip()) >= 3:
+                lang = detect(text)
+                # Normalize some frequent outputs to 'en'
+                if lang in {"en", "en-us", "en-uk"}:
+                    return "en"
+                return lang
+        except Exception:
+            pass
+    ascii_ratio = sum(c.isascii() for c in text) / max(1, len(text) or 1)
+    return "en" if ascii_ratio > 0.95 else "unknown"
 
 def build_prompt(question: str, docs_text: str) -> str:
     return (

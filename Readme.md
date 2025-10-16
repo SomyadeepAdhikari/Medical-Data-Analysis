@@ -162,5 +162,37 @@ You now have a fully local-friendly, configurable RAG pipeline with:
 
 > Next recommended enhancement: add a FastAPI endpoint (`/ask`) plus a `/health` route to facilitate integration.
 
+## 19. Streamlit UI (New)
+An interactive dark-themed web interface is available via `streamlit_app.py`.
+
+### Launch
+```
+streamlit run streamlit_app.py
+```
+
+Ensure you have first built the vector store (run `python Rag_1.py`).
+
+### Features
+- Chat experience with fake streaming effect
+- Sidebar settings: retriever k, model display, load model button, clear chat
+- Retrieval-only indicator if `SKIP_LLM=true`
+- Context inspection tab to view raw retrieved chunks
+- Dark theme configured in `.streamlit/config.toml`
+- Lazy model load only when requested (saves memory)
+
+### Environment Influence
+- `HUGGINGFACE_LLM_MODEL` shows which model is targeted
+- `SKIP_LLM=true` disables generation and shows only context
+
+### Troubleshooting
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Empty retriever | Vector DB not built | Run `python Rag_1.py` |
+| Model never loads | Large model OOM | Choose smaller model in `.env` |
+| Only context, no answer | Retrieval-only mode or load failure | Check logs / disable `SKIP_LLM` |
+
+---
+*UI module is optional; core CLI scripts still function independently.*
+
 ---
 *Generated documentation. Keep this file updated as you iterate.*
