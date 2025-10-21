@@ -6,6 +6,9 @@ langchain-chroma==0.1.1
 python-dotenv==1.0.1
 chromadb==0.4.24
 
+# Hybrid retrieval (BM25 + Dense)
+rank-bm25==0.2.2
+
 # HuggingFace & NLP
 transformers==4.43.3
 sentence-transformers==3.0.1
@@ -27,6 +30,10 @@ pyarrow==17.0.0
 
 # UI
 streamlit==1.38.0
+streamlit-mic-recorder==0.0.8
+
+# ASR for voice input
+faster-whisper==1.0.3
 
 # Optional: language detection improvement
 langdetect==1.0.9

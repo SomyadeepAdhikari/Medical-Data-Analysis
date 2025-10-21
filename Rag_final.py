@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+import tempfile
 import requests
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
@@ -14,6 +15,21 @@ from langchain.schema import HumanMessage, SystemMessage, AIMessage
 from langchain.schema.output_parser import StrOutputParser
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import importlib
+from typing import Optional, List
+
+# Hybrid retrieval additions
+try:
+    from langchain_community.retrievers import BM25Retriever  # type: ignore
+    from langchain.retrievers import EnsembleRetriever  # type: ignore
+    _HYBRID_AVAILABLE = True
+except Exception:
+    _HYBRID_AVAILABLE = False
+
+try:
+    # Document class for rebuilding BM25 docs from Chroma
+    from langchain_core.documents import Document  # type: ignore
+except Exception:
+    Document = None  # type: ignore
 
 # Optional better language detection (langdetect) fallback to heuristic
 try:
@@ -58,7 +74,44 @@ Environment Variables (update your .env):
     SARVAM_BASE_URL=https://api.sarvam.ai
 """
 
-def init_vector_store():
+def _build_dense_retriever(db: Chroma, k: int):
+    return db.as_retriever(search_type="similarity", search_kwargs={"k": k})
+
+
+def _build_hybrid_retriever(db: Chroma, k: int, dense_weight: float = 0.6) -> object:
+    """Create a hybrid retriever (dense + BM25) if available, else return dense-only retriever.
+
+    dense_weight controls the blend; lexical weight = (1 - dense_weight).
+    """
+    dense = _build_dense_retriever(db, k)
+    if not _HYBRID_AVAILABLE or Document is None:
+        print("[INFO] Hybrid retrieval not available. Falling back to dense-only.")
+        return dense
+    try:
+        # Fetch all documents from Chroma to build a BM25 index in-memory
+        raw = db.get(include=["documents", "metadatas"])  # type: ignore[attr-defined]
+        docs_texts: List[str] = raw.get("documents", []) or []
+        metas: List[dict] = raw.get("metadatas", []) or []
+        all_docs: List[Document] = []  # type: ignore[assignment]
+        for i, t in enumerate(docs_texts):
+            if not t:
+                continue
+            md = metas[i] if i < len(metas) else {}
+            all_docs.append(Document(page_content=t, metadata=md))  # type: ignore[arg-type]
+        if not all_docs:
+            print("[WARN] No documents available for BM25. Using dense-only retriever.")
+            return dense
+        bm25 = BM25Retriever.from_documents(all_docs)
+        bm25.k = k
+        hybrid = EnsembleRetriever(retrievers=[dense, bm25], weights=[dense_weight, 1 - dense_weight])
+        print(f"[INFO] Hybrid retriever ready (k={k}, weights: dense={dense_weight}, bm25={1-dense_weight}).")
+        return hybrid
+    except Exception as e:
+        print(f"[WARN] Failed to initialize hybrid retriever: {e}. Using dense-only retriever.")
+        return dense
+
+
+def init_vector_store(mode: str = "dense", k: int = 3):
     embedding_model_name = os.getenv("HUGGINGFACE_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
     embeddings = None
     if _FASTEMBED:
@@ -70,8 +123,11 @@ def init_vector_store():
     if embeddings is None:
         embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
-    retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 3})
-    return retriever
+    mode = (mode or "dense").lower()
+    if mode == "hybrid":
+        return _build_hybrid_retriever(db, k=k)
+    # default: dense
+    return _build_dense_retriever(db, k=k)
 
 hf_model_name = os.getenv("HUGGINGFACE_LLM_MODEL", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 device = os.getenv("HUGGINGFACE_DEVICE", "cpu")
@@ -174,6 +230,41 @@ def detect_language_simple(text: str) -> str:
     ascii_ratio = sum(c.isascii() for c in text) / max(1, len(text) or 1)
     return "en" if ascii_ratio > 0.95 else "unknown"
 
+
+# ------------- Voice to Text (ASR) -------------
+try:
+    from faster_whisper import WhisperModel  # type: ignore
+    _ASR_AVAILABLE = True
+except Exception:
+    _ASR_AVAILABLE = False
+
+
+def transcribe_audio(audio_bytes: bytes, language_hint: Optional[str] = None) -> str:
+    """Transcribe WAV audio bytes to text using faster-whisper.
+
+    Requirements: pip install faster-whisper and ensure ffmpeg is available on PATH.
+    Accepts WAV input (mono/16k recommended). Returns a best-effort transcript.
+    """
+    if not _ASR_AVAILABLE:
+        raise RuntimeError("ASR not available. Install 'faster-whisper' to enable voice input.")
+    device_asr = os.getenv("ASR_DEVICE", "cpu")  # cpu or cuda
+    compute_type = os.getenv("ASR_COMPUTE_TYPE", ("int8" if device_asr == "cpu" else "float16"))
+    model_size = os.getenv("ASR_MODEL", "small")  # tiny, base, small, medium, large-v2
+    model = WhisperModel(model_size, device=device_asr, compute_type=compute_type)
+    # Write to a temp file for decoding
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
+    try:
+        segments, info = model.transcribe(tmp_path, language=language_hint, vad_filter=True)
+        text_parts = [seg.text.strip() for seg in segments if getattr(seg, "text", None)]
+        return " ".join(text_parts).strip()
+    finally:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+
 def build_prompt(question: str, docs_text: str) -> str:
     return (
         f"Question: {question}\n\n"
@@ -267,11 +358,25 @@ def parse_args():
     parser_local = argparse.ArgumentParser(description="Unified RAG QA (interactive or single question)")
     parser_local.add_argument("--query", "-q", type=str, help="Single question to answer (activates single-shot mode)")
     parser_local.add_argument("--mode", choices=["auto", "interactive", "single"], default="auto", help="Mode selection: auto picks interactive if no --query provided")
+    parser_local.add_argument("--retrieval", choices=["dense", "hybrid"], default=os.getenv("RETRIEVAL_MODE", "dense"), help="Retrieval strategy: dense or hybrid (dense+bm25)")
+    parser_local.add_argument("--k", type=int, default=int(os.getenv("RETRIEVER_K", "3")), help="Top-k chunks to retrieve")
+    parser_local.add_argument("--audio", type=str, help="Path to a WAV audio file to transcribe and use as the query")
     return parser_local.parse_args()
 
 def main():
     args = parse_args()
-    retriever = init_vector_store()
+    retriever = init_vector_store(mode=args.retrieval, k=args.k)
+    if args.audio and not args.query:
+        # Load and transcribe audio input if provided
+        try:
+            with open(args.audio, "rb") as f:
+                audio_bytes = f.read()
+            transcript = transcribe_audio(audio_bytes)
+            print(f"[INFO] Transcribed query: {transcript}")
+            args.query = transcript
+        except Exception as e:
+            print(f"[ERROR] Failed to transcribe audio: {e}")
+            raise SystemExit(1)
     if args.mode == "interactive" or (args.mode == "auto" and not args.query):
         interactive_mode(retriever)
     else:
@@ -282,27 +387,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-""" 
-Sample questions (for reference):
- - Find the number of patients with a specific condition.
- - Patients who have undergone a specific test (Blood Glucose).
- - Patients who have a certain symptom (fatigue).
- - Oldest and youngest patients.
- - Patients with a specific medication.
- - Patients by gender and age range.
- - Patients who have no symptoms.
- - Which condition were more common in ages 20-30 according to the dataset? 
- - How effective was Insulin based on the cases provided?
- - Are there common symptoms that appear across multiple conditions?
- - What are the main findings about Coronary Artery Disease in the dataset?
-
-CLI Usage Examples:
-    Interactive:  python Rag_final.py
-    Single-shot: python Rag_final.py --query "List key diabetes biomarkers" 
-    Force mode:  python Rag_final.py --mode interactive
-    Auto mode:   python Rag_final.py --mode auto --query "What is CAD?"
-
-Deprecated: The separate one_to_one_question_rag.py script can now be removed or left as a thin wrapper.
-"""
 
