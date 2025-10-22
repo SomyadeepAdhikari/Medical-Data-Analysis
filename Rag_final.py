@@ -111,7 +111,7 @@ def _build_hybrid_retriever(db: Chroma, k: int, dense_weight: float = 0.6) -> ob
         return dense
 
 
-def init_vector_store(mode: str = "dense", k: int = 3):
+def init_vector_store(mode: str = "dense", k: int = 6):
     embedding_model_name = os.getenv("HUGGINGFACE_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
     embeddings = None
     if _FASTEMBED:

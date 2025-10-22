@@ -1,7 +1,7 @@
 import os
 import time
 import traceback
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -20,10 +20,292 @@ except Exception:
 load_dotenv()
 
 st.set_page_config(
-    page_title="Medical RAG Assistant",
+    page_title="🩺 Medical Data Analysis",
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded"
+)
+
+# -------------- ChatGPT-Style Theme (CSS) --------------
+
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* === ChatGPT Color Palette === */
+    :root {
+        --bg-main: #0d0d0d;
+        --bg-sidebar: #171717;
+        --surface: #1e1e1e;
+        --surface-hover: #292929;
+        --border: #2f2f2f;
+        --text-primary: #ececec;
+        --text-secondary: #adadad;
+        --text-muted: #767676;
+        --accent-user: #2c5fee;
+        --accent-assistant: #2f2f2f;
+        --accent-hover: #3d3d3d;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 20px;
+        --radius-full: 999px;
+        --shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    /* === Base Layout === */
+    html, body, [data-baseweb="baseweb"], .stApp {
+        background: var(--bg-main);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+    
+    /* Hide default header and adjust sidebar */
+    header[data-testid="stHeader"] {
+        background: transparent;
+        border-bottom: 1px solid var(--border);
+    }
+    section[data-testid="stSidebar"] > div {
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border);
+    }
+    
+    /* === Centered Chat Container === */
+    .main .block-container {
+        max-width: 48rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        margin: 0 auto;
+        padding-bottom: 100px;
+    }
+    
+    /* === Message Bubbles === */
+    .chat-messages {
+        padding-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .message-row {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 0;
+    }
+    .message-row.user {
+        background: var(--bg-main);
+    }
+    .message-row.assistant {
+        background: var(--surface);
+    }
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.125rem;
+        flex-shrink: 0;
+        background: var(--surface-hover);
+    }
+    .message-row.user .message-avatar {
+        background: var(--accent-user);
+        color: white;
+    }
+    .message-content {
+        flex: 1;
+        min-width: 0;
+        padding-top: 4px;
+    }
+    .message-content p {
+        margin: 0;
+        color: var(--text-primary);
+    }
+    
+    /* Override Streamlit chat_message defaults */
+    .stChatMessage {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    
+    /* === Bottom Composer === */
+    .composer-container {
+        position: fixed;
+        bottom: 0;
+        left: 320px;
+        right: 0;
+        padding: 0.75rem 1rem;
+        background: var(--bg-main);
+        border-top: 1px solid var(--border);
+        z-index: 200;
+    }
+    @media (max-width: 1000px) {
+        .composer-container { left: 0; }
+    }
+    
+    .composer-inner {
+        max-width: 48rem;
+        margin: 0 auto;
+    }
+    
+    .composer-box {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 0.5rem;
+        box-shadow: var(--shadow);
+    }
+    
+    .composer-box input[type="text"],
+    .composer-box textarea {
+        background: transparent !important;
+        color: var(--text-primary) !important;
+        border: none !important;
+        outline: none !important;
+        resize: none !important;
+        font-family: inherit !important;
+        font-size: 0.9375rem !important;
+        line-height: 1.25 !important;
+        padding: 0.5rem !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        max-height: 40px !important;
+    }
+    
+    .composer-box textarea::placeholder,
+    .composer-box input[type="text"]::placeholder {
+        color: var(--text-muted) !important;
+    }
+    
+    /* Icon Buttons - ChatGPT style */
+    .icon-button {
+        width: 40px;
+        height: 40px;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        border-radius: var(--radius-md) !important;
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-secondary) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        font-size: 1.125rem !important;
+        padding: 0 !important;
+    }
+    
+    .icon-button:hover {
+        background: var(--surface-hover) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .icon-button.send-btn {
+        background: var(--accent-user) !important;
+        color: white !important;
+    }
+    
+    .icon-button.send-btn:hover {
+        background: #1d4ed8 !important;
+    }
+    
+    .icon-button:disabled {
+        opacity: 0.4 !important;
+        cursor: not-allowed !important;
+    }
+    
+    /* Attachments */
+    .attachment-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-full);
+        background: var(--surface-hover);
+        color: var(--text-secondary);
+        font-size: 0.8125rem;
+        margin: 0.25rem 0.25rem 0 0;
+    }
+    .attachment-chip button {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0;
+        margin-left: 0.25rem;
+        font-size: 0.875rem;
+    }
+    .attachment-chip button:hover {
+        color: var(--text-primary);
+    }
+    
+    /* Popover */
+    div[data-testid="stPopover"] > div {
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: var(--radius-md) !important;
+        box-shadow: var(--shadow) !important;
+    }
+    
+    /* Streamlit overrides */
+    .stTextArea textarea {
+        background: transparent !important;
+        border: none !important;
+    }
+    button[kind="primary"] {
+        background: var(--accent-user) !important;
+        border: none !important;
+    }
+    button[kind="secondary"] {
+        background: transparent !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text-secondary) !important;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.5rem;
+        background: transparent;
+        border-bottom: 1px solid var(--border);
+    }
+    .stTabs [data-baseweb="tab"] {
+        background: transparent;
+        color: var(--text-secondary);
+        border: none;
+        padding: 0.5rem 1rem;
+    }
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        color: var(--text-primary);
+        border-bottom: 2px solid var(--accent-user);
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: var(--bg-main);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: var(--radius-sm);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--surface-hover);
+    }
+    
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 # -------------- Utility & State --------------
@@ -40,7 +322,13 @@ def init_session_state():
     if "retrieval_mode" not in st.session_state:
         st.session_state.retrieval_mode = os.getenv("RETRIEVAL_MODE", "dense")
     if "top_k" not in st.session_state:
-        st.session_state.top_k = int(os.getenv("RETRIEVER_K", "3"))
+        st.session_state.top_k = int(os.getenv("RETRIEVER_K", "6"))
+    if "composer_text" not in st.session_state:
+        st.session_state.composer_text = ""
+    if "attachments" not in st.session_state:
+        st.session_state.attachments = []  # list of dicts: {name, content}
+    if "pending_voice" not in st.session_state:
+        st.session_state.pending_voice = None  # store transcript temporarily
 
 init_session_state()
 
@@ -82,6 +370,11 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### About")
     st.write("Medical Dataset Retrieval-Augmented Generation interface. Build the vector DB first via `python Rag_1.py` if empty.")
+    
+    st.markdown("---")
+    st.caption("**Built with Streamlit**")
+    st.caption("RAG pipeline using HuggingFace + Chroma")
+    st.caption("Theme: ChatGPT-style dark mode")
 
     if clear_chat_clicked:
         st.session_state.messages = []
@@ -114,9 +407,16 @@ with st.sidebar:
 chat_tab, context_tab = st.tabs(["💬 Chat", "📄 Retrieved Context"])
 
 with chat_tab:
-    st.title("🩺 Medical RAG Assistant")
-    st.caption("Ask questions grounded in your medical dataset.")
-
+    # Header
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 1rem 0 1.5rem;">
+            <h1 style="font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--text-primary);">🩺 Medical Data Analysis</h1>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    
     # Ensure a retriever is available (lazy create on first load)
     if st.session_state.retriever is None:
         with st.spinner("Loading vector store ..."):
@@ -127,47 +427,89 @@ with chat_tab:
                 st.session_state.retriever = None
 
     if st.session_state.retriever is not None:
-        # Guard: don't show chat input until retriever is ready
-        user_query = st.chat_input("Type your medical question...")
-
-        # Voice input: microphone (preferred) or file upload (fallback)
-        voice_transcript = None
-        if _MIC_AVAILABLE:
-            st.caption("Speak your question and click Stop to transcribe")
-            audio = mic_recorder(start_prompt="🎙️ Start recording", stop_prompt="⏹️ Stop", just_once=False, use_container_width=True)
-            if audio and isinstance(audio, dict) and audio.get("bytes"):
-                try:
-                    voice_transcript = transcribe_audio(audio["bytes"])  # WAV bytes provided by component
-                    st.info(f"Transcribed: {voice_transcript}")
-                except Exception as e:
-                    st.warning(f"Mic transcription failed: {e}")
-        else:
-            voice_file = st.file_uploader("Optional: Upload a WAV file with your question (any language)", type=["wav"], accept_multiple_files=False)
-            if voice_file is not None:
-                try:
-                    audio_bytes = voice_file.read()
-                    voice_transcript = transcribe_audio(audio_bytes)
-                    st.info(f"Transcribed voice query: {voice_transcript}")
-                except Exception as e:
-                    st.warning(f"Voice transcription unavailable or failed: {e}")
-
-        # Render previous conversation
+        # Display messages
         for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])    
+            role = msg.get("role", "assistant")
+            content = msg.get("content", "")
+            avatar = "👤" if role == "user" else "🤖"
+            
+            with st.chat_message(role, avatar=avatar):
+                st.markdown(content)
 
-        effective_query = voice_transcript or user_query
+        # Input controls row
+        col1, col2, col3 = st.columns([0.80, 0.10, 0.10])
+        
+        with col1:
+            user_query = st.chat_input("Type your medical question...")
+        
+        with col2:
+            # Voice recorder button
+            if _MIC_AVAILABLE:
+                with st.popover("🎙️", use_container_width=True):
+                    st.write("**Voice Input**")
+                    audio = mic_recorder(
+                        start_prompt="🎙️ Start",
+                        stop_prompt="⏹️ Stop",
+                        just_once=False,
+                        use_container_width=True,
+                    )
+                    if audio and isinstance(audio, dict) and audio.get("bytes"):
+                        try:
+                            transcript = transcribe_audio(audio["bytes"])  # type: ignore[arg-type]
+                            st.session_state.pending_voice = transcript
+                            st.success(f"✓ Transcribed! Submit to send.")
+                        except Exception as e:
+                            st.error(f"Transcription failed: {e}")
+            else:
+                st.button("🎙️", disabled=True, use_container_width=True, help="Mic not available")
+        
+        with col3:
+            # Attach files button
+            with st.popover("📎", use_container_width=True):
+                st.write("**Attach Files**")
+                up = st.file_uploader("Upload .txt or .md files", type=["txt", "md"], accept_multiple_files=True, label_visibility="collapsed")
+                if up:
+                    for f in up:
+                        try:
+                            data = f.read().decode("utf-8", errors="ignore")
+                            if not any(a["name"] == f.name for a in st.session_state.attachments):
+                                st.session_state.attachments.append({"name": f.name, "content": data[:5000]})
+                                st.success(f"✓ Attached: {f.name}")
+                        except Exception as e:
+                            st.error(f"Failed to read {getattr(f,'name','file')}: {e}")
+                
+                if st.session_state.attachments:
+                    st.divider()
+                    st.write(f"**{len(st.session_state.attachments)} file(s) attached:**")
+                    for att in st.session_state.attachments:
+                        st.caption(f"📎 {att['name']}")
+                    if st.button("Clear all", use_container_width=True):
+                        st.session_state.attachments = []
+                        st.rerun()
+
+        # Handle input
+        effective_query: Optional[str] = None
+        if st.session_state.pending_voice:
+            effective_query = st.session_state.pending_voice
+            st.session_state.pending_voice = None
+        elif user_query:
+            effective_query = user_query
 
         if effective_query:
+            # Add attachments if any
+            if st.session_state.attachments:
+                extra = "\n\nAttached Notes:\n" + "\n---\n".join(
+                    [a.get("content", "") for a in st.session_state.attachments]
+                )
+                effective_query = effective_query + extra
+            
             st.session_state.messages.append({"role": "user", "content": effective_query})
             with st.chat_message("user"):
                 st.markdown(effective_query)
 
-            with st.chat_message("assistant"):
+            with st.chat_message("assistant", avatar="🤖"):
                 placeholder = st.empty()
                 try:
-                    # Build a lightweight messages list compatible with answer_query
-                    # answer_query itself will manage message appends internally but we only store plain text here
                     result = answer_query(effective_query, st.session_state.retriever)
                     answer = result.get("answer") or "No answer (retrieval only mode)."
                     st.session_state.last_answer = result
@@ -180,7 +522,7 @@ with chat_tab:
                     placeholder.markdown(answer)
                     st.session_state.messages.append({"role": "assistant", "content": answer})
                 except Exception as e:
-                    err_text = f"Error generating answer: {e}"\
+                    err_text = f"Error generating answer: {e}" \
                                f"\n\n````\n{traceback.format_exc()}\n````"
                     placeholder.error(err_text)
 
@@ -194,7 +536,3 @@ with context_tab:
         st.text_area("Raw Retrieved Context", value=ctx, height=400)
     else:
         st.info("No context yet. Ask a question in Chat tab.")
-
-# -------------- Footer --------------
-st.markdown("---")
-st.caption("Built with Streamlit · RAG pipeline using HuggingFace + Chroma · Theme: custom dark mode")
