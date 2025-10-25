@@ -8,7 +8,19 @@ from dotenv import load_dotenv
 
 # Reuse RAG logic by importing functions from Rag_final.py
 # (Assumes Rag_final.py is in same directory.)
-from Rag_final import init_vector_store, answer_query, load_generation_pipeline, hf_model_name, transcribe_audio
+from Rag_final import (
+    init_vector_store,
+    answer_query,
+    load_generation_pipeline,
+    hf_model_name,
+    transcribe_audio,
+)
+# Optional multilingual helpers (Sarvam AI)
+try:
+    from Rag_final import sarvam_translate, detect_language_simple  # type: ignore
+    _SARVAM_HELPERS = True
+except Exception:
+    _SARVAM_HELPERS = False
 
 # Optional mic recorder component
 try:
@@ -446,22 +458,46 @@ with chat_tab:
             # Voice recorder button
             if _MIC_AVAILABLE:
                 with st.popover("🎙️", use_container_width=True):
-                    st.write("**Voice Input**")
+                    st.write("**🎙️ Voice Input (Multilingual)**")
+                    st.caption("Record your question. We’ll transcribe and translate it automatically if needed.")
                     audio = mic_recorder(
-                        start_prompt="🎙️ Start",
-                        stop_prompt="⏹️ Stop",
+                        start_prompt="▶️ Start Recording",
+                        stop_prompt="⏹️ Stop Recording",
                         just_once=False,
                         use_container_width=True,
+                        key="mic_recorder",
                     )
                     if audio and isinstance(audio, dict) and audio.get("bytes"):
-                        try:
-                            transcript = transcribe_audio(audio["bytes"])  # type: ignore[arg-type]
-                            st.session_state.pending_voice = transcript
-                            st.success(f"✓ Transcribed! Submit to send.")
-                        except Exception as e:
-                            st.error(f"Transcription failed: {e}")
+                        with st.spinner("Transcribing..."):
+                            try:
+                                transcript = transcribe_audio(audio["bytes"])  # type: ignore[arg-type]
+                                transcript = (transcript or "").strip()
+                                if transcript:
+                                    # Detect and preview translation using Sarvam (answer_query will also translate internally)
+                                    if _SARVAM_HELPERS:
+                                        try:
+                                            lang = detect_language_simple(transcript)
+                                        except Exception:
+                                            lang = "unknown"
+                                        if lang != "en":
+                                            with st.spinner("Translating with Sarvam AI..."):
+                                                try:
+                                                    preview_en = sarvam_translate(transcript, target_lang="en")
+                                                    if preview_en and preview_en.strip():
+                                                        st.caption(f"Detected language: {lang}")
+                                                        st.caption(f"Translated (en) preview: {preview_en[:120]}{'...' if len(preview_en) > 120 else ''}")
+                                                except Exception:
+                                                    pass
+                                    st.session_state.pending_voice = transcript
+                                    st.success("✅ Voice captured. The message will be sent automatically.")
+                                    st.info("You can also edit or type a new message in the input box if needed.")
+                                else:
+                                    st.warning("No speech detected. Please try again.")
+                            except Exception as e:
+                                st.error(f"❌ Transcription failed: {str(e)}")
+                                st.caption("Make sure faster-whisper is installed and FFmpeg is available.")
             else:
-                st.button("🎙️", disabled=True, use_container_width=True, help="Mic not available")
+                st.button("🎙️", disabled=True, use_container_width=True, help="Mic recorder not available. Install streamlit-mic-recorder and faster-whisper.")
         
         with col3:
             # Attach files button
@@ -487,11 +523,13 @@ with chat_tab:
                         st.session_state.attachments = []
                         st.rerun()
 
-        # Handle input
+        # Handle input - prioritize pending voice (auto-submit after recording)
         effective_query: Optional[str] = None
-        if st.session_state.pending_voice:
-            effective_query = st.session_state.pending_voice
-            st.session_state.pending_voice = None
+        
+        # Check if there's a pending voice transcription (auto-submit)
+        if st.session_state.pending_voice and st.session_state.pending_voice.strip():
+            effective_query = st.session_state.pending_voice.strip()
+            st.session_state.pending_voice = None  # Clear it immediately
         elif user_query:
             effective_query = user_query
 
