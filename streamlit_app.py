@@ -341,6 +341,12 @@ def init_session_state():
         st.session_state.attachments = []  # list of dicts: {name, content}
     if "pending_voice" not in st.session_state:
         st.session_state.pending_voice = None  # store transcript temporarily
+    if "last_audio_sig" not in st.session_state:
+        st.session_state.last_audio_sig = None  # dedupe mic recordings
+    if "transcript_preview" not in st.session_state:
+        st.session_state.transcript_preview = None  # show latest transcript text
+    if "last_input_preview" not in st.session_state:
+        st.session_state.last_input_preview = None  # show latest submitted input
 
 init_session_state()
 
@@ -467,35 +473,51 @@ with chat_tab:
                         use_container_width=True,
                         key="mic_recorder",
                     )
+                    # If new audio bytes appear, transcribe once (debounced by simple signature)
                     if audio and isinstance(audio, dict) and audio.get("bytes"):
-                        with st.spinner("Transcribing..."):
-                            try:
-                                transcript = transcribe_audio(audio["bytes"])  # type: ignore[arg-type]
-                                transcript = (transcript or "").strip()
-                                if transcript:
-                                    # Detect and preview translation using Sarvam (answer_query will also translate internally)
-                                    if _SARVAM_HELPERS:
-                                        try:
-                                            lang = detect_language_simple(transcript)
-                                        except Exception:
-                                            lang = "unknown"
-                                        if lang != "en":
-                                            with st.spinner("Translating with Sarvam AI..."):
-                                                try:
-                                                    preview_en = sarvam_translate(transcript, target_lang="en")
-                                                    if preview_en and preview_en.strip():
-                                                        st.caption(f"Detected language: {lang}")
-                                                        st.caption(f"Translated (en) preview: {preview_en[:120]}{'...' if len(preview_en) > 120 else ''}")
-                                                except Exception:
-                                                    pass
-                                    st.session_state.pending_voice = transcript
-                                    st.success("✅ Voice captured. The message will be sent automatically.")
-                                    st.info("You can also edit or type a new message in the input box if needed.")
-                                else:
-                                    st.warning("No speech detected. Please try again.")
-                            except Exception as e:
-                                st.error(f"❌ Transcription failed: {str(e)}")
-                                st.caption("Make sure faster-whisper is installed and FFmpeg is available.")
+                        sig = (len(audio["bytes"]) if isinstance(audio["bytes"], (bytes, bytearray)) else None)
+                        if sig and sig != st.session_state.last_audio_sig:
+                            st.session_state.last_audio_sig = sig
+                            with st.spinner("Transcribing..."):
+                                try:
+                                    transcript = transcribe_audio(audio["bytes"])  # type: ignore[arg-type]
+                                    transcript = (transcript or "").strip()
+                                    if transcript:
+                                        st.session_state.transcript_preview = transcript
+                                        # Optional: show translation preview
+                                        if _SARVAM_HELPERS:
+                                            try:
+                                                lang = detect_language_simple(transcript)
+                                            except Exception:
+                                                lang = "unknown"
+                                            if lang != "en":
+                                                with st.spinner("Translating with Sarvam AI..."):
+                                                    try:
+                                                        preview_en = sarvam_translate(transcript, target_lang="en")
+                                                        if preview_en and preview_en.strip():
+                                                            st.caption(f"Detected language: {lang}")
+                                                            st.caption(f"Translated (en) preview: {preview_en[:120]}{'...' if len(preview_en) > 120 else ''}")
+                                                    except Exception:
+                                                        pass
+                                        st.success("✅ Voice transcribed. Review below.")
+                                    else:
+                                        st.warning("No speech detected. Please try again.")
+                                except Exception as e:
+                                    st.error(f"❌ Transcription failed: {str(e)}")
+                                    st.caption("Make sure faster-whisper is installed and FFmpeg is available.")
+
+                    # Show transcript preview with actions
+                    if st.session_state.transcript_preview:
+                        st.text_area("Transcript", value=st.session_state.transcript_preview, height=100)
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            if st.button("Send Transcript", use_container_width=True):
+                                st.session_state.pending_voice = st.session_state.transcript_preview
+                                st.session_state.transcript_preview = None
+                                st.rerun()
+                        with c2:
+                            if st.button("Discard", use_container_width=True):
+                                st.session_state.transcript_preview = None
             else:
                 st.button("🎙️", disabled=True, use_container_width=True, help="Mic recorder not available. Install streamlit-mic-recorder and faster-whisper.")
         
@@ -523,15 +545,15 @@ with chat_tab:
                         st.session_state.attachments = []
                         st.rerun()
 
-        # Handle input - prioritize pending voice (auto-submit after recording)
+        # Handle input - do not auto-submit; submit when: user typed OR clicked 'Send Transcript'
         effective_query: Optional[str] = None
-        
-        # Check if there's a pending voice transcription (auto-submit)
-        if st.session_state.pending_voice and st.session_state.pending_voice.strip():
+        if user_query:
+            effective_query = user_query.strip()
+            st.session_state.last_input_preview = effective_query
+        elif st.session_state.pending_voice and st.session_state.pending_voice.strip():
             effective_query = st.session_state.pending_voice.strip()
-            st.session_state.pending_voice = None  # Clear it immediately
-        elif user_query:
-            effective_query = user_query
+            st.session_state.last_input_preview = effective_query
+            st.session_state.pending_voice = None
 
         if effective_query:
             # Add attachments if any
