@@ -1,3 +1,5 @@
+#streamlit run streamlit_app.py
+
 import os
 import time
 import traceback

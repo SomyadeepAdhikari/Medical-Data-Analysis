@@ -1,6 +1,17 @@
 import os
+import glob
+from pathlib import Path
+
+# --- NumPy compatibility shims for NumPy 2.x (used by some deps like chromadb) ---
+try:
+    import numpy as _np  # type: ignore
+    if not hasattr(_np, "float_"):
+        _np.float_ = _np.float64  # type: ignore[attr-defined]
+    if not hasattr(_np, "uint"):
+        _np.uint = _np.uint32  # type: ignore[attr-defined]
+except Exception:
+    pass
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.document_loaders import TextLoader
 from langchain_core.documents import Document
 import pandas as pd
 from langchain_chroma import Chroma
@@ -16,9 +27,10 @@ except Exception:
 # Default model: "sentence-transformers/all-MiniLM-L6-v2" (small, fast, multilingual-ish coverage)
 # You can change via environment variable HUGGINGFACE_EMBEDDING_MODEL.
 
-# Define the directory containing the text file and the persistent directory
+# Define the directory containing source data and the persistent directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(current_dir, "documents", "train.parquet")  # Parquet dataset
+data_dir = os.path.join(current_dir, "Documents")  # Capitalized to match repo
+parquet_path = os.path.join(data_dir, "train.parquet")  # Preferred if available
 persistent_directory = os.path.join(current_dir, "db", "chroma_db")
 
 # Check if the Chroma vector store already exists or needs rebuild
@@ -40,60 +52,73 @@ if rebuild_env or needs_build:
     elif needs_build:
         print("Vector store missing or incomplete. Initializing vector store...")
 
-    # Ensure the text file exists
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(
-            f"The file {file_path} does not exist. Please check the path."
-        )
-
-    # Load parquet dataset instead of treating it as raw text
-    print("\n--- Loading parquet dataset ---")
-    if not file_path.lower().endswith('.parquet'):
-        raise ValueError("Expected a parquet file. Update path or logic for other formats.")
-
-    try:
-        df = pd.read_parquet(file_path)
-    except Exception as e:
-        raise RuntimeError(f"Failed to read parquet file {file_path}: {e}")
-
-    # Optional: limit rows for faster local builds
-    max_rows_env = os.getenv("INGEST_MAX_ROWS", "0").strip()
-    try:
-        max_rows = int(max_rows_env) if max_rows_env else 0
-    except ValueError:
-        max_rows = 0
-    if max_rows > 0 and len(df) > max_rows:
-        print(f"[INFO] Limiting ingestion to first {max_rows} rows (of {len(df)}). Set INGEST_MAX_ROWS=0 to disable.")
-        df = df.head(max_rows)
-
-    # Decide which columns to merge into textual content.
-    # Heuristic: include object (string) columns + selected numeric columns converted with labels.
-    text_columns = [c for c in df.columns if df[c].dtype == 'object']
-    if not text_columns:
-        # Fallback: take all columns
-        text_columns = list(df.columns)
-
-    # Build documents list (faster than iterrows)
+    # Load data from parquet if present, else fall back to txt/md files
+    df = None
     documents = []
-    for row in df.itertuples(index=True, name=None):
-        idx = row[0]
-        parts = []
-        for i, col in enumerate(text_columns, start=1):
+    if os.path.exists(parquet_path):
+        print("\n--- Loading parquet dataset ---")
+        try:
+            df = pd.read_parquet(parquet_path)
+        except Exception as e:
+            raise RuntimeError(f"Failed to read parquet file {parquet_path}: {e}")
+    else:
+        print("\n--- Parquet not found; falling back to text files in Documents/ ---")
+        txt_files = sorted(glob.glob(os.path.join(data_dir, "*.txt")))
+        md_files = sorted(glob.glob(os.path.join(data_dir, "*.md")))
+        all_files = txt_files + md_files
+        if not all_files:
+            raise FileNotFoundError(
+                "No data files found. Provide Documents/train.parquet or one/more .txt/.md files in Documents/."
+            )
+        for fp in all_files:
             try:
-                val = getattr(row, col)
-            except Exception:
-                # Fallback if attribute access fails (e.g., non-identifier column names)
-                val = df.loc[idx, col]
-            if pd.isna(val):
-                continue
-            parts.append(f"{col}: {val}")
-        if not parts:
-            continue
-        content = "\n".join(parts)
-        documents.append(Document(page_content=content, metadata={"row_index": int(idx)}))
+                with open(fp, "r", encoding="utf-8", errors="ignore") as f:
+                    content = f.read()
+                if content.strip():
+                    documents.append(Document(page_content=content, metadata={"source": Path(fp).name}))
+            except Exception as e:
+                print(f"[WARN] Skipping {fp}: {e}")
 
-    if not documents:
-        raise ValueError("No documents were generated from the parquet file. Check column types or adjust logic.")
+    # If dataframe is present, convert rows to Documents
+    if df is not None:
+        # Optional: limit rows for faster local builds
+        max_rows_env = os.getenv("INGEST_MAX_ROWS", "0").strip()
+        try:
+            max_rows = int(max_rows_env) if max_rows_env else 0
+        except ValueError:
+            max_rows = 0
+        if max_rows > 0 and len(df) > max_rows:
+            print(f"[INFO] Limiting ingestion to first {max_rows} rows (of {len(df)}). Set INGEST_MAX_ROWS=0 to disable.")
+            df = df.head(max_rows)
+
+        # Decide which columns to merge into textual content.
+        text_columns = [c for c in df.columns if df[c].dtype == 'object']
+        if not text_columns:
+            text_columns = list(df.columns)
+
+        # Build documents list (faster than iterrows)
+        tmp_docs = []
+        for row in df.itertuples(index=True, name=None):
+            idx = row[0]
+            parts = []
+            for col in text_columns:
+                try:
+                    val = getattr(row, col)
+                except Exception:
+                    val = df.loc[idx, col]
+                try:
+                    if pd.isna(val):
+                        continue
+                except Exception:
+                    pass
+                parts.append(f"{col}: {val}")
+            if not parts:
+                continue
+            content = "\n".join(parts)
+            tmp_docs.append(Document(page_content=content, metadata={"row_index": int(idx)}))
+        if not tmp_docs and not documents:
+            raise ValueError("No documents were generated from the parquet file. Check column types or adjust logic.")
+        documents.extend(tmp_docs)
 
     print(f"Loaded {len(documents)} rows -> {len(documents)} raw documents")
 

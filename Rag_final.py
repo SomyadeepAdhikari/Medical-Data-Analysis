@@ -4,6 +4,18 @@ import argparse
 import tempfile
 import requests
 from dotenv import load_dotenv
+
+# --- NumPy compatibility shims for NumPy 2.x (used by some deps like chromadb) ---
+try:
+    import numpy as _np  # type: ignore
+    # Some older libs reference np.float_ / np.uint aliases removed in NumPy 2
+    if not hasattr(_np, "float_"):
+        _np.float_ = _np.float64  # type: ignore[attr-defined]
+    if not hasattr(_np, "uint"):
+        _np.uint = _np.uint32  # type: ignore[attr-defined]
+except Exception:
+    pass
+
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 try:
@@ -129,7 +141,32 @@ def init_vector_store(mode: str = "dense", k: int = 6):
             print(f"[WARN] FastEmbedEmbeddings failed: {fe}. Falling back to HuggingFaceEmbeddings: {embedding_model_name}")
     if embeddings is None:
         embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
-    db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
+    # Initialize Chroma with graceful recovery if the on-disk DB schema is incompatible
+    try:
+        db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
+    except Exception as e:
+        msg = str(e)
+        # Common case: sqlite schema mismatch after library upgrades
+        if ("no such column" in msg) or ("OperationalError" in msg) or ("schema" in msg and "mismatch" in msg):
+            import shutil, time
+            backup_dir = f"{persistent_directory}.bak-{int(time.time())}"
+            try:
+                print(f"[WARN] Chroma DB schema appears incompatible. Backing up and recreating: {backup_dir}")
+                shutil.move(persistent_directory, backup_dir)
+            except Exception as be:
+                print(f"[WARN] Could not back up existing DB: {be}. Attempting fresh directory.")
+                try:
+                    shutil.rmtree(persistent_directory, ignore_errors=True)
+                except Exception:
+                    pass
+            os.makedirs(persistent_directory, exist_ok=True)
+            try:
+                db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
+            except Exception as e2:
+                print(f"[WARN] Fresh persistent DB still failing ({e2}). Falling back to in-memory store.")
+                db = Chroma(embedding_function=embeddings)
+        else:
+            raise
     mode = (mode or "dense").lower()
     if mode == "hybrid":
         return _build_hybrid_retriever(db, k=k)
