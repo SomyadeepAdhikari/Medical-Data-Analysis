@@ -147,7 +147,8 @@ def init_vector_store(mode: str = "dense", k: int = 6):
         db = Chroma(
             persist_directory=persistent_directory,
             embedding_function=embeddings,
-            client_settings=Settings(anonymized_telemetry=False),
+            client_settings=Settings(anonymized_telemetry=False, is_persistent=True),
+            collection_name=os.getenv("CHROMA_COLLECTION", "medical_docs"),
         )
     except Exception as e:
         msg = str(e)
@@ -169,11 +170,16 @@ def init_vector_store(mode: str = "dense", k: int = 6):
                 db = Chroma(
                     persist_directory=persistent_directory,
                     embedding_function=embeddings,
-                    client_settings=Settings(anonymized_telemetry=False),
+                    client_settings=Settings(anonymized_telemetry=False, is_persistent=True),
+                    collection_name=os.getenv("CHROMA_COLLECTION", "medical_docs"),
                 )
             except Exception as e2:
                 print(f"[WARN] Fresh persistent DB still failing ({e2}). Falling back to in-memory store.")
-                db = Chroma(embedding_function=embeddings, client_settings=Settings(anonymized_telemetry=False))
+                db = Chroma(
+                    embedding_function=embeddings,
+                    client_settings=Settings(anonymized_telemetry=False),
+                    collection_name=os.getenv("CHROMA_COLLECTION", "medical_docs"),
+                )
         else:
             raise
     mode = (mode or "dense").lower()

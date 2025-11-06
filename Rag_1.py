@@ -83,7 +83,8 @@ if rebuild_env or needs_build:
     # If dataframe is present, convert rows to Documents
     if df is not None:
         # Optional: limit rows for faster local builds
-        max_rows_env = os.getenv("INGEST_MAX_ROWS", "0").strip()
+        # Prefer BUILD_ROW_LIMIT if set, else INGEST_MAX_ROWS; default 0 (no limit)
+        max_rows_env = (os.getenv("BUILD_ROW_LIMIT") or os.getenv("INGEST_MAX_ROWS") or "0").strip()
         try:
             max_rows = int(max_rows_env) if max_rows_env else 0
         except ValueError:
@@ -132,6 +133,16 @@ if rebuild_env or needs_build:
     print(f"Number of document chunks: {len(docs)}")
     print(f"Sample chunk:\n{docs[0].page_content}\n")
 
+    # Optional cap chunk count; default 0 (no limit)
+    build_chunk_limit_env = (os.getenv("BUILD_CHUNK_LIMIT") or "0").strip()
+    try:
+        build_chunk_limit = int(build_chunk_limit_env) if build_chunk_limit_env else 0
+    except ValueError:
+        build_chunk_limit = 100
+    if build_chunk_limit > 0 and len(docs) > build_chunk_limit:
+        print(f"[INFO] Limiting chunk ingestion to first {build_chunk_limit} chunks (of {len(docs)}). Override with BUILD_CHUNK_LIMIT.")
+        docs = docs[:build_chunk_limit]
+
     # Create embeddings (prefer FastEmbed if available to avoid torch issues)
     embedding_model_name = os.getenv("HUGGINGFACE_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
     embeddings = None
@@ -149,13 +160,18 @@ if rebuild_env or needs_build:
 
     # Create the vector store and persist it automatically
     print("\n--- Creating vector store ---")
-    db = Chroma.from_documents(
-        docs,
-        embeddings,
-        persist_directory=persistent_directory,
-        client_settings=Settings(anonymized_telemetry=False),
-    )
-    print("\n--- Finished creating vector store ---")
+    try:
+        db = Chroma.from_documents(
+            docs,
+            embeddings,
+            persist_directory=persistent_directory,
+            client_settings=Settings(anonymized_telemetry=False, is_persistent=True),
+            collection_name=os.getenv("CHROMA_COLLECTION", "medical_docs"),
+        )
+        print("\n--- Finished creating vector store ---")
+    except Exception as e:
+        print(f"[ERROR] Failed creating vector store: {e}")
+        raise
 
 else:
     print("Vector store already exists and looks complete. No need to initialize.")
