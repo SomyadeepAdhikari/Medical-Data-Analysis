@@ -6,6 +6,8 @@ langchain==0.1.16
 langchain-community==0.0.35
 langchain-chroma==0.1.4
 chromadb==0.4.24
+# Pin PostHog to avoid API breakage with Chroma telemetry
+posthog<3
 python-dotenv==1.0.1
 
 # Hybrid retrieval (BM25 + Dense)

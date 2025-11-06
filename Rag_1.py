@@ -15,6 +15,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_core.documents import Document
 import pandas as pd
 from langchain_chroma import Chroma
+from chromadb.config import Settings  # disable telemetry
 from langchain_community.embeddings import HuggingFaceEmbeddings
 try:
     # Fast, torch-free embedding backend
@@ -149,7 +150,11 @@ if rebuild_env or needs_build:
     # Create the vector store and persist it automatically
     print("\n--- Creating vector store ---")
     db = Chroma.from_documents(
-        docs, embeddings, persist_directory=persistent_directory)
+        docs,
+        embeddings,
+        persist_directory=persistent_directory,
+        client_settings=Settings(anonymized_telemetry=False),
+    )
     print("\n--- Finished creating vector store ---")
 
 else:

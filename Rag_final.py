@@ -17,6 +17,7 @@ except Exception:
     pass
 
 from langchain_chroma import Chroma
+from chromadb.config import Settings  # disable telemetry
 from langchain_community.embeddings import HuggingFaceEmbeddings
 try:
     from langchain_community.embeddings import FastEmbedEmbeddings  # type: ignore
@@ -143,7 +144,11 @@ def init_vector_store(mode: str = "dense", k: int = 6):
         embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name)
     # Initialize Chroma with graceful recovery if the on-disk DB schema is incompatible
     try:
-        db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
+        db = Chroma(
+            persist_directory=persistent_directory,
+            embedding_function=embeddings,
+            client_settings=Settings(anonymized_telemetry=False),
+        )
     except Exception as e:
         msg = str(e)
         # Common case: sqlite schema mismatch after library upgrades
@@ -161,10 +166,14 @@ def init_vector_store(mode: str = "dense", k: int = 6):
                     pass
             os.makedirs(persistent_directory, exist_ok=True)
             try:
-                db = Chroma(persist_directory=persistent_directory, embedding_function=embeddings)
+                db = Chroma(
+                    persist_directory=persistent_directory,
+                    embedding_function=embeddings,
+                    client_settings=Settings(anonymized_telemetry=False),
+                )
             except Exception as e2:
                 print(f"[WARN] Fresh persistent DB still failing ({e2}). Falling back to in-memory store.")
-                db = Chroma(embedding_function=embeddings)
+                db = Chroma(embedding_function=embeddings, client_settings=Settings(anonymized_telemetry=False))
         else:
             raise
     mode = (mode or "dense").lower()
