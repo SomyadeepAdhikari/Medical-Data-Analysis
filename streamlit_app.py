@@ -32,7 +32,7 @@ except Exception:
 load_dotenv()
 
 st.set_page_config(
-    page_title="🩺 Medical Data Analysis",
+    page_title="Medical Data Analysis",
     page_icon="🩺",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -484,21 +484,22 @@ with chat_tab:
                                     transcript = (transcript or "").strip()
                                     if transcript:
                                         st.session_state.transcript_preview = transcript
-                                        # Optional: show translation preview
+                                        # Optional: detect language and produce English preview for bilingual display
+                                        preview_en = None
+                                        lang = "unknown"
                                         if _SARVAM_HELPERS:
                                             try:
                                                 lang = detect_language_simple(transcript)
                                             except Exception:
                                                 lang = "unknown"
-                                            if lang != "en":
-                                                with st.spinner("Translating with Sarvam AI..."):
-                                                    try:
-                                                        preview_en = sarvam_translate(transcript, target_lang="en")
-                                                        if preview_en and preview_en.strip():
-                                                            st.caption(f"Detected language: {lang}")
-                                                            st.caption(f"Translated (en) preview: {preview_en[:120]}{'...' if len(preview_en) > 120 else ''}")
-                                                    except Exception:
-                                                        pass
+                                            # Attempt English translation regardless of detection to be robust
+                                            with st.spinner("Translating transcript → English ..."):
+                                                try:
+                                                    preview_en = sarvam_translate(transcript, target_lang="en")
+                                                except Exception:
+                                                    preview_en = None
+                                        # Store preview meta for UI rendering below
+                                        st.session_state["_transcript_meta"] = {"lang": lang, "en": preview_en}
                                         st.success("✅ Voice transcribed. Review below.")
                                     else:
                                         st.warning("No speech detected. Please try again.")
@@ -508,16 +509,24 @@ with chat_tab:
 
                     # Show transcript preview with actions
                     if st.session_state.transcript_preview:
-                        st.text_area("Transcript", value=st.session_state.transcript_preview, height=100)
+                        # Show transcript in original language and English (if different)
+                        meta = st.session_state.get("_transcript_meta", {}) or {}
+                        lang = meta.get("lang", "unknown")
+                        st.text_area(f"Transcript ({lang})", value=st.session_state.transcript_preview, height=100)
+                        en_prev = meta.get("en")
+                        if en_prev and isinstance(en_prev, str) and en_prev.strip():
+                            st.text_area("Transcript (English)", value=en_prev, height=100)
                         c1, c2 = st.columns(2)
                         with c1:
                             if st.button("Send Transcript", use_container_width=True):
                                 st.session_state.pending_voice = st.session_state.transcript_preview
                                 st.session_state.transcript_preview = None
+                                st.session_state["_transcript_meta"] = None
                                 st.rerun()
                         with c2:
                             if st.button("Discard", use_container_width=True):
                                 st.session_state.transcript_preview = None
+                                st.session_state["_transcript_meta"] = None
             else:
                 st.button("🎙️", disabled=True, use_container_width=True, help="Mic recorder not available. Install streamlit-mic-recorder and faster-whisper.")
         
@@ -563,24 +572,53 @@ with chat_tab:
                 )
                 effective_query = effective_query + extra
             
-            st.session_state.messages.append({"role": "user", "content": effective_query})
+            # For display: show both original input and English translation when applicable
+            try:
+                in_lang = detect_language_simple(effective_query) if _SARVAM_HELPERS else "en"
+            except Exception:
+                in_lang = "unknown"
+            if _SARVAM_HELPERS and in_lang != "en":
+                try:
+                    effective_query_en = sarvam_translate(effective_query, target_lang="en")
+                except Exception:
+                    effective_query_en = None
+            else:
+                effective_query_en = None
+
+            # Persist full user message content plus a bilingual note in chat history for rendering
+            user_display = effective_query
+            bilingual_note = ""
+            if effective_query_en and effective_query_en.strip():
+                bilingual_note = f"\n\n**English translation:**\n\n{effective_query_en}"
+            st.session_state.messages.append({"role": "user", "content": user_display + (bilingual_note if bilingual_note else "")})
             with st.chat_message("user"):
-                st.markdown(effective_query)
+                st.markdown(user_display)
+                if bilingual_note:
+                    st.markdown(bilingual_note)
 
             with st.chat_message("assistant", avatar="🤖"):
                 placeholder = st.empty()
                 try:
                     result = answer_query(effective_query, st.session_state.retriever)
-                    answer = result.get("answer") or "No answer (retrieval only mode)."
                     st.session_state.last_answer = result
-                    # Stream effect (fake typing)
+                    answer = result.get("answer") or "No answer (retrieval only mode)."
+                    answer_en = result.get("answer_en")
+                    # Stream effect (fake typing) for main answer (displayed in user's language)
                     streamed = ""
                     for token in answer.split():
                         streamed += token + " "
                         placeholder.markdown(streamed + "▌")
                         time.sleep(0.02)
-                    placeholder.markdown(answer)
-                    st.session_state.messages.append({"role": "assistant", "content": answer})
+                    # Replace placeholder with final block including bilingual rendering
+                    if answer_en and isinstance(answer_en, str) and answer_en.strip() and answer_en.strip() != answer.strip():
+                        placeholder.markdown(answer)
+                        st.caption("English version:")
+                        st.markdown(answer_en)
+                        combined_for_history = answer + "\n\n**English version:**\n\n" + answer_en
+                        st.session_state.messages.append({"role": "assistant", "content": combined_for_history})
+                    else:
+                        placeholder.markdown(answer)
+                        st.session_state.messages.append({"role": "assistant", "content": answer})
                 except Exception as e:
                     err_text = f"Error generating answer: {e}" \
                                f"\n\n````\n{traceback.format_exc()}\n````"

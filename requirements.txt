@@ -38,6 +38,9 @@ faster-whisper==1.0.3
 # Optional: language detection improvement
 langdetect==1.0.9
 
+# Optional: translation fallback (no API key)
+deep-translator==1.11.4
+
 # Removed paid / proprietary deps:
 # - langchain-google-genai
 # - google-generativeai

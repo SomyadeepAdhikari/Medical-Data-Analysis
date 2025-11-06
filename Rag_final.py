@@ -17,6 +17,13 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import importlib
 from typing import Optional, List
 
+# Optional fallback translator (no API key required)
+try:
+    from deep_translator import GoogleTranslator  # type: ignore
+    _DEEPLITE_AVAILABLE = True
+except Exception:
+    _DEEPLITE_AVAILABLE = False
+
 # Hybrid retrieval additions
 try:
     from langchain_community.retrievers import BM25Retriever  # type: ignore
@@ -195,19 +202,36 @@ SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
 SARVAM_BASE = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")
 
 def sarvam_translate(text: str, target_lang: str = "en") -> str:
-    if not SARVAM_API_KEY:
+    """Best-effort translation to target_lang.
+
+    Priority:
+    1) Sarvam API if SARVAM_API_KEY set
+    2) deep-translator GoogleTranslator fallback (no API key)
+    3) Return input text on failure
+    """
+    text = text or ""
+    if not text.strip():
         return text
-    try:
-        url = f"{SARVAM_BASE}/v1/translate"
-        payload = {"text": text, "target_language": target_lang}
-        headers = {"Authorization": f"Bearer {SARVAM_API_KEY}", "Content-Type": "application/json"}
-        r = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
-        if r.status_code == 200:
-            data = r.json()
-            return data.get("translated_text", text)
-        return text
-    except Exception:
-        return text
+    # 1) Sarvam API
+    if SARVAM_API_KEY:
+        try:
+            url = f"{SARVAM_BASE}/v1/translate"
+            payload = {"text": text, "target_language": target_lang}
+            headers = {"Authorization": f"Bearer {SARVAM_API_KEY}", "Content-Type": "application/json"}
+            r = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
+            if r.status_code == 200:
+                data = r.json()
+                return data.get("translated_text", text)
+        except Exception:
+            pass
+    # 2) Fallback: deep-translator
+    if _DEEPLITE_AVAILABLE:
+        try:
+            return GoogleTranslator(source="auto", target=target_lang).translate(text)
+        except Exception:
+            pass
+    # 3) Give up
+    return text
 
 def detect_language_simple(text: str) -> str:
     """Return ISO-ish language code if detectable.
@@ -276,7 +300,13 @@ def answer_query(query: str, retriever, messages=None):
     if messages is None:
         messages = [SystemMessage(content="You are a helpful assistant that analyzes health report data.")]
     original_lang = detect_language_simple(query)
+    # Translate incoming query to English for retrieval if needed.
+    # If language is unknown, still attempt English translation to improve retrieval.
     working_query = query if original_lang == "en" else sarvam_translate(query, target_lang="en")
+    if original_lang == "unknown":
+        translated = sarvam_translate(query, target_lang="en")
+        if translated and translated.strip():
+            working_query = translated
     relevant_docs = retriever.invoke(working_query)
     docs_text = "\n\n".join([doc.page_content for doc in relevant_docs])
     combined_prompt = build_prompt(working_query, docs_text)
@@ -284,7 +314,16 @@ def answer_query(query: str, retriever, messages=None):
     messages.append(HumanMessage(content=combined_prompt))
     pipe = load_generation_pipeline()
     if pipe is None:
-        return {"answer": None, "context": docs_text, "note": "No generation pipeline available."}
+        # Even if there's no generation, still return language/meta so UI can render bilingual frames
+        return {
+            "answer": None,
+            "answer_en": None,
+            "context": docs_text,
+            "note": "No generation pipeline available.",
+            "query_original": query,
+            "query_en": working_query,
+            "query_lang": original_lang,
+        }
     try:
         raw_output = pipe(
             combined_prompt,
@@ -324,10 +363,22 @@ def answer_query(query: str, retriever, messages=None):
         response_text = f"Generation failed: {gen_err}"
     if len(response_text) > 4000:
         response_text = response_text[:4000]
-    if original_lang != "en":
-        response_text = sarvam_translate(response_text, target_lang=original_lang)
-    messages.append(AIMessage(content=response_text))
-    return {"answer": response_text, "context": docs_text, "note": None}
+
+    # Preserve English answer before translating back to original language for display
+    answer_en = response_text
+    answer_display = response_text if original_lang == "en" else sarvam_translate(response_text, target_lang=original_lang)
+
+    messages.append(AIMessage(content=answer_display))
+    return {
+        "answer": answer_display,
+        "answer_en": answer_en,
+        "context": docs_text,
+        "note": None,
+        "query_original": query,
+        "query_en": working_query,
+        "query_lang": original_lang,
+        "answer_lang": original_lang,
+    }
 
 def interactive_mode(retriever):
     messages = [SystemMessage(content="You are a helpful assistant that analyzes health report data.")]
