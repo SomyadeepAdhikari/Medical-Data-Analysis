@@ -41,6 +41,14 @@ SARVAM_BASE_URL=https://api.sarvam.ai
 Other optional:
 ```
 HUGGINGFACEHUB_API_TOKEN=your_hf_token_if_needed
+
+# Hosted Hugging Face inference (fallback when local torch/Transformers can't load)
+# If the HF Inference base URL changes again, override it here.
+USE_HF_INFERENCE_API=false
+HF_INFERENCE_BASE_URL=https://api-inference.huggingface.co
+
+# Force local LLM load even if torch isn't installed (not recommended)
+FORCE_LOCAL_LLM=false
 ```
 
 ## 5. Installation & Setup

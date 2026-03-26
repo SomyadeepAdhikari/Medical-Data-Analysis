@@ -4,6 +4,7 @@ import argparse
 import tempfile
 import requests
 from dotenv import load_dotenv
+import importlib.util
 
 # --- NumPy compatibility shims for NumPy 2.x (used by some deps like chromadb) ---
 try:
@@ -60,10 +61,11 @@ except Exception:
 
 # Diagnostics: verify torch availability early
 try:
-    _util = getattr(importlib, "util", None)
-    if _util and _util.find_spec("torch") is not None:
+    import importlib.util as _importlib_util
+    if _importlib_util.find_spec("torch") is not None:
         import torch  # type: ignore
-        print(f"[INFO] torch version: {torch.__version__}; CUDA available: {torch.cuda.is_available()}")
+        mps_ok = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+        print(f"[INFO] torch version: {torch.__version__}; CUDA available: {torch.cuda.is_available()}; MPS available: {mps_ok}")
     else:
         print("[WARNING] torch not installed. Install with: pip install torch --upgrade")
 except Exception:
@@ -71,6 +73,100 @@ except Exception:
 
 # Load environment variables
 load_dotenv()
+
+# ---------------- Hugging Face Inference API (Hosted) ----------------
+# Some environments (notably Python 3.13 on macOS) may not have PyTorch wheels
+# available, making local Transformers generation impossible. In that case we
+# can fall back to Hugging Face hosted inference, with a configurable base URL.
+
+def _truthy_env(name: str, default: str = "false") -> bool:
+    return (os.getenv(name, default) or "").strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _torch_available() -> bool:
+    return importlib.util.find_spec("torch") is not None
+
+
+def _hf_token() -> str:
+    # Support the common HF env var names.
+    token = (
+        os.getenv("HF_TOKEN")
+        or os.getenv("HUGGINGFACEHUB_API_TOKEN")
+        or os.getenv("HUGGINGFACE_API_TOKEN")
+        or ""
+    )
+    # Be tolerant of accidentally quoted values.
+    token = token.strip().strip('"').strip("'")
+    return token
+
+
+def _hf_inference_base_urls() -> list[str]:
+    """Return candidate base URLs to try for HF hosted inference.
+
+    HF has migrated/introduced routing endpoints over time; trying a small
+    fallback list makes the project resilient to base URL changes.
+    """
+    override = (
+        os.getenv("HF_INFERENCE_BASE_URL")
+        or os.getenv("HUGGINGFACE_INFERENCE_BASE_URL")
+        or os.getenv("HUGGINGFACEHUB_INFERENCE_BASE_URL")
+        or ""
+    ).strip().rstrip("/")
+    if override:
+        # Users sometimes paste a full endpoint ending with "/models".
+        # Normalize to the base so we can safely append "/models/{repo_id}".
+        if override.endswith("/models"):
+            override = override[: -len("/models")]
+        return [override]
+    return [
+        "https://api-inference.huggingface.co",
+        "https://router.huggingface.co/hf-inference",
+    ]
+
+
+def _hf_hosted_generate(prompt: str, *, model: str, max_new_tokens: int = 512) -> str:
+    """Generate text using Hugging Face hosted inference.
+
+    Requires an access token for gated models and for higher rate limits.
+    """
+    token = _hf_token()
+    if not token:
+        raise RuntimeError(
+            "Missing Hugging Face token. Set HF_TOKEN or HUGGINGFACEHUB_API_TOKEN in .env to use hosted inference."
+        )
+
+    try:
+        from huggingface_hub import InferenceClient  # type: ignore
+    except Exception as e:
+        raise RuntimeError(f"huggingface_hub is required for hosted inference but could not be imported: {e}")
+
+    last_err: Exception | None = None
+    for base_url in _hf_inference_base_urls():
+        try:
+            # In huggingface_hub<=0.24.x, the InferenceClient does not expose a
+            # separate "inference endpoint base" argument. The supported way to
+            # target a different base URL is to pass a full URL as the model.
+            model_url = f"{base_url.rstrip('/')}/models/{model}"
+            client = InferenceClient(model=model_url, token=token, timeout=90)
+            out = client.text_generation(
+                prompt,
+                max_new_tokens=max_new_tokens,
+                do_sample=False,
+                return_full_text=False,
+            )
+            if isinstance(out, str):
+                return out.strip()
+            # Fallback: if a typed object is returned for some reason.
+            generated = getattr(out, "generated_text", None) or getattr(out, "text", None)
+            if isinstance(generated, str) and generated.strip():
+                return generated.strip()
+            # If we can't interpret the return value, treat as an error.
+            raise RuntimeError(f"Unexpected hosted inference response type: {type(out)}")
+        except Exception as e:
+            last_err = e
+            continue
+
+    raise RuntimeError(f"Hosted inference failed for all base URLs. Last error: {last_err}")
 
 # Define the path to the Chroma vector store
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -192,6 +288,9 @@ hf_model_name = os.getenv("HUGGINGFACE_LLM_MODEL", "TinyLlama/TinyLlama-1.1B-Cha
 device = os.getenv("HUGGINGFACE_DEVICE", "cpu")
 temperature = float(os.getenv("LLM_TEMPERATURE", 0.2))
 skip_model = os.getenv("SKIP_LLM", "false").lower() in {"1", "true", "yes"}
+do_sample_default = os.getenv("LLM_DO_SAMPLE", "false").lower() in {"1", "true", "yes"}
+use_hosted_inference = _truthy_env("USE_HF_INFERENCE_API", "false")
+force_local_llm = _truthy_env("FORCE_LOCAL_LLM", "false")
 
 generation_pipeline = None
 parser = StrOutputParser()
@@ -202,6 +301,12 @@ def load_generation_pipeline():
         return generation_pipeline
     if skip_model:
         print("[INFO] SKIP_LLM=true -> Skipping model load. Retrieval only mode.")
+        return None
+
+    # If torch isn't installed, local Transformers generation won't work.
+    # Prefer hosted inference in that case (or retrieval-only), unless forced.
+    if not force_local_llm and not _torch_available():
+        print("[INFO] torch not installed -> skipping local LLM load. Set USE_HF_INFERENCE_API=true for hosted inference, or FORCE_LOCAL_LLM=true to attempt local anyway.")
         return None
     # Auto-downsize safeguard for CPU when a large model is requested
     allow_large_cpu = os.getenv("ALLOW_LARGE_CPU_MODEL", "false").lower() in {"1", "true", "yes"}
@@ -214,23 +319,83 @@ def load_generation_pipeline():
             # Switch to a lighter default
             os.environ["HUGGINGFACE_LLM_MODEL"] = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
             globals()["hf_model_name"] = os.getenv("HUGGINGFACE_LLM_MODEL")
-    print(f"Loading HuggingFace model: {hf_model_name} on {device}")
-    if device != "cpu":
-        print("[INFO] If you encounter CUDA OOM, set HUGGINGFACE_DEVICE=cpu or choose a smaller model.")
+    requested_device = (device or "cpu").lower()
+    resolved_device = requested_device
+    torch_dtype = None
+    pipeline_device = -1
+
+    # Resolve device and check availability
+    if requested_device in {"cuda", "gpu"}:
+        try:
+            import torch  # type: ignore
+            if not torch.cuda.is_available():
+                print("[WARN] HUGGINGFACE_DEVICE=cuda requested but CUDA not available. Falling back to CPU.")
+                resolved_device = "cpu"
+            else:
+                resolved_device = "cuda"
+        except Exception:
+            print("[WARN] Torch not available for CUDA. Falling back to CPU.")
+            resolved_device = "cpu"
+    elif requested_device in {"mps", "apple"}:
+        try:
+            import torch  # type: ignore
+            mps_ok = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+            if not mps_ok:
+                print("[WARN] HUGGINGFACE_DEVICE=mps requested but MPS not available. Falling back to CPU.")
+                resolved_device = "cpu"
+            else:
+                resolved_device = "mps"
+        except Exception:
+            print("[WARN] Torch not available for MPS. Falling back to CPU.")
+            resolved_device = "cpu"
+    else:
+        resolved_device = "cpu"
+
+    if resolved_device == "cpu":
+        pipeline_device = -1
+    elif resolved_device == "cuda":
+        pipeline_device = 0
+        torch_dtype = "auto"
+    elif resolved_device == "mps":
+        # Newer Transformers accepts device="mps" for pipeline.
+        pipeline_device = "mps"
+        torch_dtype = "auto"
+
+    print(f"Loading HuggingFace model: {hf_model_name} on {resolved_device}")
+    if resolved_device == "cuda":
+        print("[INFO] If you encounter CUDA OOM, choose a smaller model or reduce max_new_tokens.")
+    if resolved_device == "mps":
+        print("[INFO] Using Apple Silicon MPS acceleration.")
     try:
         tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
-        model_ref = AutoModelForCausalLM.from_pretrained(
-            hf_model_name,
-            trust_remote_code=True,
-            device_map="auto" if device != "cpu" else None,
-        )
+        model_kwargs = {"trust_remote_code": True}
+        # device_map="auto" works well for CUDA; for MPS we move the model explicitly.
+        if resolved_device == "cuda":
+            model_kwargs["device_map"] = "auto"
+        if torch_dtype is not None:
+            model_kwargs["torch_dtype"] = torch_dtype
+        model_ref = AutoModelForCausalLM.from_pretrained(hf_model_name, **model_kwargs)
+        if resolved_device == "mps":
+            # Ensure weights are on MPS; device_map isn't used for MPS.
+            model_ref = model_ref.to("mps")
+        # If we're using greedy decoding (do_sample=False), unset sampling-only knobs
+        # to avoid noisy warnings from Transformers.
+        if not do_sample_default:
+            try:
+                if hasattr(model_ref, "generation_config") and model_ref.generation_config is not None:
+                    model_ref.generation_config.top_k = None
+                    model_ref.generation_config.top_p = None
+            except Exception:
+                pass
         generation_pipeline = pipeline(
             "text-generation",
             model=model_ref,
             tokenizer=tokenizer,
-            device=0 if device != "cpu" else -1,
+            device=pipeline_device,
             max_new_tokens=512,
-            temperature=temperature,
+            do_sample=do_sample_default,
+            # If do_sample is False, temperature is ignored but triggers a warning when non-default.
+            temperature=(temperature if do_sample_default else 1.0),
         )
     except Exception as e:
         print(f"[ERROR] Failed to load model {hf_model_name}: {e}\nFalling back to 'distilgpt2'.")
@@ -241,9 +406,10 @@ def load_generation_pipeline():
                 "text-generation",
                 model=model_ref,
                 tokenizer=tokenizer,
-                device=0 if device != "cpu" else -1,
+                device=pipeline_device if resolved_device != "mps" else -1,
                 max_new_tokens=256,
-                temperature=temperature,
+                do_sample=do_sample_default,
+                temperature=(temperature if do_sample_default else 1.0),
             )
         except Exception as e2:
             print(f"[FATAL] Could not load fallback model: {e2}. You can set HUGGINGFACE_LLM_MODEL=sshleifer/tiny-gpt2 for a very small test model.")
@@ -365,8 +531,20 @@ def answer_query(query: str, retriever, messages=None):
     # We intentionally allow heterogeneous message objects; type checkers may warn but runtime is fine.
     messages.append(HumanMessage(content=combined_prompt))
     pipe = load_generation_pipeline()
-    if pipe is None:
-        # Even if there's no generation, still return language/meta so UI can render bilingual frames
+    # If hosted inference is forced but we don't have credentials, bail out early.
+    if use_hosted_inference and not _hf_token():
+        return {
+            "answer": None,
+            "answer_en": None,
+            "context": docs_text,
+            "note": "USE_HF_INFERENCE_API=true but no HF token found. Set HF_TOKEN or HUGGINGFACEHUB_API_TOKEN.",
+            "query_original": query,
+            "query_en": working_query,
+            "query_lang": original_lang,
+        }
+
+    # If local pipeline is unavailable, try hosted inference if possible; otherwise return retrieval-only.
+    if pipe is None and not _hf_token():
         return {
             "answer": None,
             "answer_en": None,
@@ -377,28 +555,32 @@ def answer_query(query: str, retriever, messages=None):
             "query_lang": original_lang,
         }
     try:
-        raw_output = pipe(
-            combined_prompt,
-            do_sample=False,
-            num_return_sequences=1,
-        )[0]["generated_text"]
-        # Remove the prompt portion robustly (handle potential whitespace differences)
-        if raw_output.startswith(combined_prompt):
-            response_text = raw_output[len(combined_prompt):]
+        # Use hosted inference when explicitly enabled, or when local pipeline is missing.
+        if use_hosted_inference or pipe is None:
+            response_text = _hf_hosted_generate(combined_prompt, model=hf_model_name, max_new_tokens=512)
+            response_text = (response_text or "").strip()
         else:
-            # Attempt split by prompt sentinel lines
-            parts = raw_output.split("Relevant Documents:")
-            response_text = raw_output
-            if len(parts) > 1:
-                # Take last segment after docs block
-                response_text = parts[-1]
-        # Final cleanup
-        response_text = response_text.strip()
+            raw_output = pipe(
+                combined_prompt,
+                do_sample=False,
+                num_return_sequences=1,
+            )[0]["generated_text"]
+            # Remove the prompt portion robustly (handle potential whitespace differences)
+            if raw_output.startswith(combined_prompt):
+                response_text = raw_output[len(combined_prompt):]
+            else:
+                # Attempt split by prompt sentinel lines
+                parts = raw_output.split("Relevant Documents:")
+                response_text = raw_output
+                if len(parts) > 1:
+                    # Take last segment after docs block
+                    response_text = parts[-1]
+            response_text = response_text.strip()
+
         # Remove repeated instruction sentence if model echoes it multiple times
         dedupe_line = "If the answer is not present, reply exactly: I'm not sure."
         if response_text:
             lines = [l for l in response_text.splitlines() if l.strip()]
-            # Collapse consecutive duplicates of the instruction line
             cleaned = []
             prev = None
             for l in lines:
@@ -407,10 +589,11 @@ def answer_query(query: str, retriever, messages=None):
                 cleaned.append(l)
                 prev = l.strip()
             response_text = "\n".join(cleaned)
-            # If answer is only the instruction line repeated, treat as uncertainty
             unique_non_instr = [l for l in cleaned if l.strip() != dedupe_line]
             if not unique_non_instr:
                 response_text = "I'm not sure."
+        else:
+            response_text = "I'm not sure."
     except Exception as gen_err:
         response_text = f"Generation failed: {gen_err}"
     if len(response_text) > 4000:
